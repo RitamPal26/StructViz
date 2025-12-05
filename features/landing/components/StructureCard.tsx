@@ -1,15 +1,16 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { DataStructure } from '../../../shared/types';
+import { DataStructure, ViewType } from '../../../shared/types';
 import { Button } from '../../../shared/components/Button';
 import { Play } from 'lucide-react';
 
 interface StructureCardProps {
   structure: DataStructure;
   index: number;
+  onNavigate: (view: ViewType) => void;
 }
 
-export const StructureCard: React.FC<StructureCardProps> = ({ structure, index }) => {
+export const StructureCard: React.FC<StructureCardProps> = ({ structure, index, onNavigate }) => {
   const Icon = structure.icon;
 
   return (
@@ -38,6 +39,7 @@ export const StructureCard: React.FC<StructureCardProps> = ({ structure, index }
           variant="outline" 
           size="sm" 
           className="w-full group-hover:bg-primary-600 group-hover:border-primary-500 group-hover:text-white transition-all"
+          onClick={() => onNavigate(structure.id)}
         >
           <Play className="w-4 h-4 mr-2" />
           Visualize

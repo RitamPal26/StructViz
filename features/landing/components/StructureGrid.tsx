@@ -1,8 +1,13 @@
 import React from 'react';
 import { StructureCard } from './StructureCard';
 import { DATA_STRUCTURES } from '../../../shared/constants';
+import { ViewType } from '../../../shared/types';
 
-export const StructureGrid: React.FC = () => {
+interface StructureGridProps {
+  onNavigate: (view: ViewType) => void;
+}
+
+export const StructureGrid: React.FC<StructureGridProps> = ({ onNavigate }) => {
   return (
     <section className="py-20 bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -20,7 +25,8 @@ export const StructureGrid: React.FC = () => {
             <StructureCard 
               key={structure.id} 
               structure={structure} 
-              index={index} 
+              index={index}
+              onNavigate={onNavigate}
             />
           ))}
         </div>
