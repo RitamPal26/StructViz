@@ -55,10 +55,11 @@ export const LinkedListVisualizer: React.FC<LinkedListVisualizerProps> = ({ onBa
     <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col">
       <Header />
       
-      <div className="flex-1 flex flex-col lg:flex-row pt-16 overflow-hidden">
+      {/* Layout Fix */}
+      <div className="flex-1 flex flex-col lg:flex-row pt-16 lg:h-screen lg:overflow-hidden">
         
         {/* Main Canvas Area */}
-        <main className="flex-1 flex flex-col relative h-[calc(100vh-4rem)] lg:h-auto overflow-y-auto lg:overflow-hidden">
+        <main className="flex-1 flex flex-col relative min-h-[calc(100vh-4rem)] lg:min-h-0 lg:h-auto overflow-y-auto lg:overflow-hidden">
           
           {/* Top Bar */}
           <div className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-800 bg-gray-900/50 backdrop-blur gap-4 shrink-0">
@@ -182,10 +183,6 @@ export const LinkedListVisualizer: React.FC<LinkedListVisualizerProps> = ({ onBa
           </div>
         </main>
 
-        {/* Sidebar - hidden on mobile initially? Or stacked below. 
-            The layout is flex-col lg:flex-row, so it stacks below on mobile. 
-            We need to ensure it has a height on mobile or doesn't crush the canvas.
-        */}
         <Sidebar />
       </div>
     </div>

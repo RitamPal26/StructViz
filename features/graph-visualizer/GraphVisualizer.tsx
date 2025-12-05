@@ -46,17 +46,21 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ onBack }) => {
     <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col overflow-hidden">
       <Header />
       
-      <div className="flex-1 flex flex-col lg:flex-row pt-16">
+      {/* Layout Fix */}
+      <div className="flex-1 flex flex-col lg:flex-row pt-16 lg:h-screen lg:overflow-hidden">
         
         {/* Main Canvas Area */}
-        <main className="flex-1 flex flex-col relative h-[calc(100vh-4rem)]">
+        <main className="flex-1 flex flex-col relative min-h-[calc(100vh-4rem)] lg:min-h-0 lg:h-auto">
           
           {/* Canvas Toolbar */}
-          <div className="absolute top-4 left-4 z-10 flex gap-2">
-            <Button variant="outline" size="sm" onClick={onBack} className="rounded-full w-10 h-10 p-0 flex items-center justify-center bg-gray-900/80 backdrop-blur">
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div className="bg-gray-900/80 backdrop-blur border border-gray-700 rounded-lg px-4 py-2 text-sm text-gray-300 shadow-lg">
+          <div className="absolute top-4 left-4 z-10 flex flex-wrap gap-2 pointer-events-none">
+            {/* Enable pointer events for buttons */}
+            <div className="pointer-events-auto">
+                <Button variant="outline" size="sm" onClick={onBack} className="rounded-full w-10 h-10 p-0 flex items-center justify-center bg-gray-900/80 backdrop-blur">
+                <ArrowLeft className="w-5 h-5" />
+                </Button>
+            </div>
+            <div className="pointer-events-auto bg-gray-900/80 backdrop-blur border border-gray-700 rounded-lg px-4 py-2 text-sm text-gray-300 shadow-lg max-w-[calc(100vw-4rem)]">
               {isPlaying ? (
                 <span className="text-yellow-400 font-bold">Animation Running...</span>
               ) : (
@@ -68,17 +72,19 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ onBack }) => {
           </div>
 
           {/* SVG Canvas */}
-          <div className="flex-1 bg-gray-950 overflow-hidden cursor-crosshair relative">
+          <div className="flex-1 bg-gray-950 overflow-auto cursor-crosshair relative min-h-[400px]">
              {/* Grid Background */}
             <div className="absolute inset-0 opacity-10 pointer-events-none" 
                  style={{ 
                    backgroundImage: 'linear-gradient(#374151 1px, transparent 1px), linear-gradient(90deg, #374151 1px, transparent 1px)', 
-                   backgroundSize: '40px 40px' 
+                   backgroundSize: '40px 40px',
+                   minWidth: '100%',
+                   minHeight: '100%'
                  }} 
             />
 
             <svg 
-              className="w-full h-full"
+              className="w-full h-full min-w-[600px] min-h-[600px]"
               onMouseDown={handlers.handleCanvasMouseDown}
               onMouseMove={handlers.handleCanvasMouseMove}
               onMouseUp={handlers.handleCanvasMouseUp}
@@ -115,7 +121,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ onBack }) => {
           </div>
 
           {/* Data Structure Panel (Bottom Right Overlay) */}
-          <div className="absolute bottom-6 right-6 w-64 h-64 bg-gray-900/90 backdrop-blur border border-gray-700 rounded-xl shadow-2xl p-4 overflow-hidden z-20">
+          <div className="absolute bottom-6 right-6 w-64 h-64 bg-gray-900/90 backdrop-blur border border-gray-700 rounded-xl shadow-2xl p-4 overflow-hidden z-20 hidden md:block">
              <AlgorithmPanel step={currentStep} />
           </div>
 

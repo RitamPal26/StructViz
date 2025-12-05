@@ -73,12 +73,15 @@ export const QueueCanvas: React.FC<QueueCanvasProps> = ({
   // --- CIRCULAR MODE ---
   // Using a circular arrangement
   const RADIUS = 140; // px
-  const CENTER_X = 250;
-  const CENTER_Y = 200;
+  // CENTER_X/Y are relative to the container size below
   
   return (
     <div className="w-full h-[400px] bg-gray-900 rounded-xl border border-gray-800 relative overflow-hidden flex items-center justify-center">
-      <div className="relative w-[500px] h-[400px] flex items-center justify-center">
+      {/* 
+        Fix: Added scale-75 sm:scale-100 to fit 500px width on small mobile screens.
+        origin-center keeps it centered when scaled.
+      */}
+      <div className="relative w-[500px] h-[400px] flex items-center justify-center scale-75 sm:scale-100 origin-center transition-transform">
         
         {/* Connection Ring */}
         <div className="absolute w-[280px] h-[280px] rounded-full border-2 border-dashed border-gray-700 opacity-50" />

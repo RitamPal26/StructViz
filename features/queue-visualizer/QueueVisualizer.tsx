@@ -37,10 +37,15 @@ export const QueueVisualizer: React.FC<QueueVisualizerProps> = ({ onBack }) => {
     <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col">
       <Header />
       
-      <div className="flex-1 flex flex-col lg:flex-row pt-16 overflow-hidden">
+      {/* 
+        Layout Fix: 
+        - Remove overflow-hidden on mobile to allow window scrolling to reach sidebar.
+        - lg:h-screen lg:overflow-hidden locks layout on desktop for 'app' feel.
+      */}
+      <div className="flex-1 flex flex-col lg:flex-row pt-16 lg:h-screen lg:overflow-hidden">
         
         {/* Main Area */}
-        <main className="flex-1 flex flex-col relative h-[calc(100vh-4rem)] overflow-y-auto lg:overflow-hidden">
+        <main className="flex-1 flex flex-col relative min-h-[calc(100vh-4rem)] lg:min-h-0 lg:h-auto overflow-y-auto lg:overflow-hidden">
           
           {/* Top Bar */}
           <div className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-800 bg-gray-900/50 backdrop-blur gap-4 shrink-0 z-10">
@@ -70,7 +75,7 @@ export const QueueVisualizer: React.FC<QueueVisualizerProps> = ({ onBack }) => {
           <div className="flex-1 flex flex-col bg-gray-900 relative">
             
             {/* Controls Overlay */}
-            <div className="w-full max-w-3xl mx-auto p-4 z-20">
+            <div className="w-full max-w-3xl mx-auto p-4 z-20 shrink-0">
               <QueueControls 
                 onEnqueue={enqueue}
                 onDequeue={dequeue}
@@ -83,7 +88,8 @@ export const QueueVisualizer: React.FC<QueueVisualizerProps> = ({ onBack }) => {
             </div>
 
             {/* Canvas Area */}
-            <div className="flex-1 flex items-center justify-center p-4 sm:p-8 overflow-hidden relative">
+            {/* overflow-auto ensures content can be scrolled if it exceeds view on small screens */}
+            <div className="flex-1 flex items-center justify-center p-4 sm:p-8 overflow-auto relative min-h-[300px]">
               
               {/* Message Toast */}
               <div className="absolute top-4 left-0 right-0 text-center pointer-events-none z-30">
@@ -100,7 +106,7 @@ export const QueueVisualizer: React.FC<QueueVisualizerProps> = ({ onBack }) => {
                 </motion.div>
               </div>
 
-              <div className="w-full max-w-4xl">
+              <div className="w-full max-w-4xl flex justify-center">
                 <QueueCanvas 
                   items={items}
                   circularBuffer={circularBuffer}

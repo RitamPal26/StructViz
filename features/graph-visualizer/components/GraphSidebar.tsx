@@ -29,7 +29,8 @@ export const GraphSidebar: React.FC<GraphSidebarProps> = ({
   message
 }) => {
   return (
-    <div className="w-full lg:w-80 bg-gray-800 border-l border-gray-700 flex flex-col h-[calc(100vh-4rem)]">
+    // Fix: Removed fixed height on mobile (h-[calc...]), added lg:h-full or lg:h-[calc...] to ensure it only applies on desktop flex row.
+    <div className="w-full lg:w-80 bg-gray-800 border-l border-gray-700 flex flex-col h-auto lg:h-[calc(100vh-4rem)]">
       
       {/* Algorithms */}
       <div className="p-4 border-b border-gray-700">
