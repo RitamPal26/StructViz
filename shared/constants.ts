@@ -1,4 +1,4 @@
-import { Network, Link2, Layers, ListEnd, Share2, Hash } from 'lucide-react';
+import { Network, Link2, Layers, ListEnd, Share2, Hash, Triangle } from 'lucide-react';
 import { DataStructure } from './types';
 
 export const DATA_STRUCTURES: DataStructure[] = [
@@ -31,6 +31,12 @@ export const DATA_STRUCTURES: DataStructure[] = [
     title: 'Hash Table',
     description: 'Learn how key-value pairs are stored and retrieved efficiently using hash functions.',
     icon: Hash
+  },
+  {
+    id: 'heap',
+    title: 'Min/Max Heap',
+    description: 'Visualize priority queues and heap sort using complete binary trees.',
+    icon: Triangle
   },
   {
     id: 'graph',

@@ -6,6 +6,7 @@ import { StackVisualizer } from './features/stack-visualizer/StackVisualizer';
 import { QueueVisualizer } from './features/queue-visualizer/QueueVisualizer';
 import { GraphVisualizer } from './features/graph-visualizer/GraphVisualizer';
 import { HashTableVisualizer } from './features/hash-table-visualizer/HashTableVisualizer';
+import { HeapVisualizer } from './features/heap-visualizer/HeapVisualizer';
 import { ViewType } from './shared/types';
 
 const App: React.FC = () => {
@@ -25,6 +26,8 @@ const App: React.FC = () => {
         return <GraphVisualizer onBack={() => setCurrentView('landing')} />;
       case 'hash-table':
         return <HashTableVisualizer onBack={() => setCurrentView('landing')} />;
+      case 'heap':
+        return <HeapVisualizer onBack={() => setCurrentView('landing')} />;
       case 'landing':
       default:
         return <LandingPage onNavigate={setCurrentView} />;
