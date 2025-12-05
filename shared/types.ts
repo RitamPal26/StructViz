@@ -1,6 +1,6 @@
 import { LucideIcon } from 'lucide-react';
 
-export type ViewType = 'landing' | 'binary-tree' | 'linked-list' | 'stack' | 'queue';
+export type ViewType = 'landing' | 'binary-tree' | 'linked-list' | 'stack' | 'queue' | 'graph';
 
 export interface DataStructure {
   id: ViewType;

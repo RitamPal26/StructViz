@@ -1,4 +1,4 @@
-import { Network, Link2, Layers, ListEnd } from 'lucide-react';
+import { Network, Link2, Layers, ListEnd, Share2 } from 'lucide-react';
 import { DataStructure } from './types';
 
 export const DATA_STRUCTURES: DataStructure[] = [
@@ -25,6 +25,12 @@ export const DATA_STRUCTURES: DataStructure[] = [
     title: 'Queue',
     description: 'Master the FIFO (First In, First Out) principle for scheduling and buffering.',
     icon: ListEnd
+  },
+  {
+    id: 'graph',
+    title: 'Graph Algorithms',
+    description: 'Navigate complex networks using BFS, DFS, and Dijkstra pathfinding algorithms.',
+    icon: Share2
   }
 ];
 

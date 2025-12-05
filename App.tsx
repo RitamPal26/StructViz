@@ -4,6 +4,7 @@ import { TreeVisualizer } from './features/tree-visualizer/TreeVisualizer';
 import { LinkedListVisualizer } from './features/linked-list/LinkedListVisualizer';
 import { StackVisualizer } from './features/stack-visualizer/StackVisualizer';
 import { QueueVisualizer } from './features/queue-visualizer/QueueVisualizer';
+import { GraphVisualizer } from './features/graph-visualizer/GraphVisualizer';
 import { ViewType } from './shared/types';
 
 const App: React.FC = () => {
@@ -19,6 +20,8 @@ const App: React.FC = () => {
         return <StackVisualizer onBack={() => setCurrentView('landing')} />;
       case 'queue':
         return <QueueVisualizer onBack={() => setCurrentView('landing')} />;
+      case 'graph':
+        return <GraphVisualizer onBack={() => setCurrentView('landing')} />;
       case 'landing':
       default:
         return <LandingPage onNavigate={setCurrentView} />;
