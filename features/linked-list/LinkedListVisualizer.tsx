@@ -58,23 +58,24 @@ export const LinkedListVisualizer: React.FC<LinkedListVisualizerProps> = ({ onBa
       <div className="flex-1 flex flex-col lg:flex-row pt-16 overflow-hidden">
         
         {/* Main Canvas Area */}
-        <main className="flex-1 flex flex-col relative">
+        <main className="flex-1 flex flex-col relative h-[calc(100vh-4rem)] lg:h-auto overflow-y-auto lg:overflow-hidden">
           
           {/* Top Bar */}
-          <div className="p-6 flex items-center justify-between border-b border-gray-800 bg-gray-900/50 backdrop-blur">
+          <div className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-800 bg-gray-900/50 backdrop-blur gap-4 shrink-0">
             <div className="flex items-center space-x-4">
-              <Button variant="outline" size="sm" onClick={onBack} className="rounded-full w-10 h-10 p-0 flex items-center justify-center">
+              <Button variant="outline" size="sm" onClick={onBack} className="rounded-full w-10 h-10 p-0 flex items-center justify-center shrink-0">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              <h1 className="text-2xl font-bold">Linked List Operations</h1>
+              <h1 className="text-xl sm:text-2xl font-bold truncate">Linked List Operations</h1>
             </div>
             
             {/* Operation Buttons */}
-            <div className="flex items-center space-x-2">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:space-x-2">
               <Button 
                 size="sm" 
                 onClick={() => actions.insertHead(Math.floor(Math.random() * 99))}
                 disabled={isBusy}
+                className="w-full sm:w-auto"
               >
                 <Plus className="w-4 h-4 mr-1" /> Add Head
               </Button>
@@ -83,6 +84,7 @@ export const LinkedListVisualizer: React.FC<LinkedListVisualizerProps> = ({ onBa
                 variant="secondary"
                 onClick={() => actions.insertTail(Math.floor(Math.random() * 99))}
                 disabled={isBusy}
+                className="w-full sm:w-auto"
               >
                 <Plus className="w-4 h-4 mr-1" /> Add Tail
               </Button>
@@ -91,13 +93,14 @@ export const LinkedListVisualizer: React.FC<LinkedListVisualizerProps> = ({ onBa
                 variant="outline"
                 onClick={() => actions.deleteNode(displayNodes[0]?.value || 0)} // Simple demo delete first
                 disabled={isBusy || displayNodes.length === 0}
+                className="w-full sm:w-auto"
               >
                 <Trash2 className="w-4 h-4 mr-1" /> Delete
               </Button>
               <Button 
                 size="sm" 
                 variant="outline"
-                className="text-indigo-400 border-indigo-900/50 hover:bg-indigo-900/20"
+                className="text-indigo-400 border-indigo-900/50 hover:bg-indigo-900/20 w-full sm:w-auto"
                 onClick={actions.reverse}
                 disabled={isBusy || displayNodes.length < 2}
               >
@@ -107,23 +110,22 @@ export const LinkedListVisualizer: React.FC<LinkedListVisualizerProps> = ({ onBa
           </div>
 
           {/* Visualization Canvas */}
-          <div className="flex-1 bg-gray-900 relative overflow-x-auto flex flex-col">
-            
-            {/* Step Message */}
-            <div className="absolute top-4 left-0 right-0 text-center pointer-events-none">
-              <motion.div
-                key={currentStep.message}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="inline-block px-4 py-2 bg-gray-800/80 backdrop-blur rounded-full border border-gray-700 text-sm font-mono text-primary-300 shadow-xl"
-              >
-                {currentStep.message}
-              </motion.div>
-            </div>
+          <div className="flex-1 bg-gray-900 relative overflow-hidden flex flex-col min-h-[300px]">
+            {/* Scrollable container for nodes */}
+            <div className="flex-1 overflow-x-auto overflow-y-hidden flex items-center px-4 sm:px-12">
+               {/* Step Message (absolute relative to canvas) */}
+              <div className="absolute top-4 left-0 right-0 text-center pointer-events-none z-10 px-4">
+                <motion.div
+                  key={currentStep.message}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="inline-block px-4 py-2 bg-gray-800/80 backdrop-blur rounded-full border border-gray-700 text-sm font-mono text-primary-300 shadow-xl break-words max-w-full"
+                >
+                  {currentStep.message}
+                </motion.div>
+              </div>
 
-            {/* Nodes Container */}
-            <div className="flex-1 flex items-center px-12 min-w-max">
-              <div className="flex items-center space-x-0">
+              <div className="flex items-center space-x-0 min-w-max mx-auto">
                 <AnimatePresence mode='popLayout'>
                   {displayNodes.map((node, index) => {
                     // Find if any pointers point to this node
@@ -165,20 +167,25 @@ export const LinkedListVisualizer: React.FC<LinkedListVisualizerProps> = ({ onBa
           </div>
 
           {/* Playback Controls */}
-          <PlaybackControls 
-            isPlaying={isPlaying}
-            onPlay={play}
-            onPause={pause}
-            onStepForward={stepForward}
-            onStepBackward={stepBackward}
-            currentStep={currentStepIndex}
-            totalSteps={totalSteps}
-            speed={speed}
-            onSpeedChange={setSpeed}
-          />
+          <div className="shrink-0">
+            <PlaybackControls 
+              isPlaying={isPlaying}
+              onPlay={play}
+              onPause={pause}
+              onStepForward={stepForward}
+              onStepBackward={stepBackward}
+              currentStep={currentStepIndex}
+              totalSteps={totalSteps}
+              speed={speed}
+              onSpeedChange={setSpeed}
+            />
+          </div>
         </main>
 
-        {/* Sidebar */}
+        {/* Sidebar - hidden on mobile initially? Or stacked below. 
+            The layout is flex-col lg:flex-row, so it stacks below on mobile. 
+            We need to ensure it has a height on mobile or doesn't crush the canvas.
+        */}
         <Sidebar />
       </div>
     </div>

@@ -19,6 +19,7 @@ export const useBinaryTree = () => {
   const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
   const [foundNodeId, setFoundNodeId] = useState<string | null>(null);
   const [modifyingNodeId, setModifyingNodeId] = useState<string | null>(null);
+  const [externalHighlightVal, setExternalHighlightVal] = useState<number | null>(null);
 
   // Refs for async access to latest state
   const speedRef = useRef(speed);
@@ -30,8 +31,6 @@ export const useBinaryTree = () => {
   const calculateLayout = useCallback((node: TreeNode | null, x: number, y: number, level: number, parentX?: number): { nodes: VisualNode[], edges: VisualEdge[] } => {
     if (!node) return { nodes: [], edges: [] };
 
-    // Update node position
-    // We update the underlying node object's position as well to persist it for animations
     node.x = x;
     node.y = y;
 
@@ -43,14 +42,6 @@ export const useBinaryTree = () => {
       state: 'default'
     };
 
-    const edges: VisualEdge[] = [];
-    if (parentX !== undefined) {
-      // Edge from parent (calculate parent Y based on level)
-      // This is a simplification; passed coords are usually better
-    }
-
-    // Calculate offset for children: shrink width as we go deeper
-    // Level 0 offset: 250 (Width/4), Level 1: 125, etc.
     const offset = FRAME_WIDTH / (Math.pow(2, level + 2));
     
     const leftResult = calculateLayout(node.left, x - offset, y + VERTICAL_SPACING, level + 1, x);
@@ -70,7 +61,7 @@ export const useBinaryTree = () => {
     };
   }, []);
 
-  // Sync visual state when root changes or highlight states change
+  // Sync visual state
   useEffect(() => {
     if (!root) {
       setVisualNodes([]);
@@ -80,25 +71,25 @@ export const useBinaryTree = () => {
 
     const { nodes, edges } = calculateLayout(root, FRAME_WIDTH / 2, 50, 0);
 
-    // Apply states
-    const styledNodes = nodes.map(n => ({
-      ...n,
-      state: (n.id === foundNodeId ? 'found' : 
-              n.id === activeNodeId ? 'highlighted' : 
-              n.id === modifyingNodeId ? 'modifying' : 'default') as VisualNode['state']
-    }));
+    const styledNodes = nodes.map(n => {
+      let state: VisualNode['state'] = 'default';
+      if (n.id === foundNodeId) state = 'found';
+      else if (n.id === activeNodeId) state = 'highlighted';
+      else if (n.id === modifyingNodeId) state = 'modifying';
+      // External highlight override
+      else if (externalHighlightVal !== null && n.value === externalHighlightVal) state = 'highlighted';
+
+      return { ...n, state };
+    });
 
     setVisualNodes(styledNodes);
     setVisualEdges(edges);
-  }, [root, activeNodeId, foundNodeId, modifyingNodeId, calculateLayout]);
+  }, [root, activeNodeId, foundNodeId, modifyingNodeId, externalHighlightVal, calculateLayout]);
 
-  const insert = async (value: number) => {
-    if (operation !== 'idle') return;
-    setOperation('inserting');
-    setMessage(`Inserting ${value}...`);
-    setActiveNodeId(null);
-    setFoundNodeId(null);
-
+  const insert = async (value: number, animate = true) => {
+    if (operation !== 'idle' && animate) return;
+    if (animate) setOperation('inserting');
+    
     const newNode: TreeNode = {
       id: Math.random().toString(36).substr(2, 9),
       value,
@@ -109,22 +100,55 @@ export const useBinaryTree = () => {
     };
 
     if (!root) {
-      setMessage(`Tree is empty. Setting ${value} as root.`);
-      await wait();
+      if (animate) {
+        setMessage(`Tree is empty. Setting ${value} as root.`);
+        await wait();
+      }
       setRoot(newNode);
-      setFoundNodeId(newNode.id);
-      setMessage(`Inserted ${value}.`);
-      setOperation('idle');
+      if (animate) {
+        setFoundNodeId(newNode.id);
+        setMessage(`Inserted ${value}.`);
+        setOperation('idle');
+      }
       return;
     }
 
+    // Interactive traversal logic (same as before but can be skipped)
     let current = root;
-    let pathHistory: TreeNode[] = [];
     
-    // Simulate Traversal
+    // Simple recursive insert for bulk operations without animation
+    const recursiveInsert = (node: TreeNode, val: number) => {
+      if (val < node.value) {
+        if (!node.left) node.left = { id: Math.random().toString(36).substr(2, 9), value: val, left: null, right: null, x: 0, y: 0 };
+        else recursiveInsert(node.left, val);
+      } else if (val > node.value) {
+        if (!node.right) node.right = { id: Math.random().toString(36).substr(2, 9), value: val, left: null, right: null, x: 0, y: 0 };
+        else recursiveInsert(node.right, val);
+      }
+    };
+
+    if (!animate) {
+      // Create deep copy to trigger React update
+      // A proper deep copy function would be better, but for this strict structure:
+      // We will just re-insert everything into a new root.
+      // Actually, since we are mutating 'root' in the recursiveInsert above (if root exists), we need to trigger update.
+      // A better way for bulk build is to reset and build.
+      recursiveInsert(root, value);
+      setRoot({ ...root }); 
+      return;
+    }
+
+    // ... (Keep existing animated insert logic for manual single interactions)
+    // For brevity, reusing the simplified recursive logic for this update context if animate is false
+    // But the original file had full animation code. I should preserve it.
+    
+    // Full Animation Logic:
+    setMessage(`Inserting ${value}...`);
+    setActiveNodeId(null);
+    setFoundNodeId(null);
+    
     while (true) {
       setActiveNodeId(current.id);
-      pathHistory.push(current);
       
       if (value === current.value) {
         setMessage(`${value} already exists.`);
@@ -152,9 +176,7 @@ export const useBinaryTree = () => {
         current = current.right;
       }
     }
-
-    // Trigger update
-    setRoot({ ...root }); // shallow copy to trigger re-render
+    setRoot({ ...root });
     setMessage(`Inserted ${value}.`);
     setFoundNodeId(newNode.id);
     setActiveNodeId(null);
@@ -200,7 +222,6 @@ export const useBinaryTree = () => {
     setOperation('idle');
   };
 
-  // Helper to remove node recursively (pure logic part)
   const deleteNode = (node: TreeNode | null, value: number): { node: TreeNode | null, deleted: boolean } => {
     if (!node) return { node: null, deleted: false };
 
@@ -213,40 +234,30 @@ export const useBinaryTree = () => {
       node.right = newRight;
       return { node, deleted };
     } else {
-      // Node found
-      // Case 1: No children
       if (!node.left && !node.right) {
         return { node: null, deleted: true };
       }
-      // Case 2: One child
       if (!node.left) return { node: node.right, deleted: true };
       if (!node.right) return { node: node.left, deleted: true };
 
-      // Case 3: Two children
-      // Find min in right subtree
       let temp = node.right;
       while (temp.left) temp = temp.left;
       
-      node.value = temp.value; // Replace value
-      // Delete the successor
+      node.value = temp.value; 
       const { node: newRight } = deleteNode(node.right, temp.value);
       node.right = newRight;
       return { node, deleted: true };
     }
   };
 
-  // Interactive delete wrapper
   const remove = async (value: number) => {
     if (operation !== 'idle' || !root) return;
     setOperation('deleting');
     setMessage(`Searching for ${value} to delete...`);
     
-    // First, animate search to find the node
     let current: TreeNode | null = root;
-    let parent: TreeNode | null = null;
     let foundNode: TreeNode | null = null;
 
-    // Visual search
     while (current) {
       setActiveNodeId(current.id);
       await wait();
@@ -258,10 +269,8 @@ export const useBinaryTree = () => {
         await wait();
         break;
       } else if (value < current.value) {
-        parent = current;
         current = current.left;
       } else {
-        parent = current;
         current = current.right;
       }
     }
@@ -273,9 +282,6 @@ export const useBinaryTree = () => {
       return;
     }
 
-    // Perform deletion logic
-    // Note: We use the recursive helper for the actual structure update to simplify the complex 2-children case logic
-    // Ideally we would animate the successor swap step-by-step too, but for now we animate the search and then the result.
     const { node: newRoot } = deleteNode({ ...root }, value);
     
     setRoot(newRoot);
@@ -290,6 +296,46 @@ export const useBinaryTree = () => {
     setMessage('Tree cleared.');
   };
 
+  const buildTree = async (values: number[]) => {
+    clear();
+    // Use a small delay to ensure state clears before rebuilding
+    setTimeout(() => {
+      // Reconstruct manually to avoid animation delays
+      if (values.length === 0) return;
+      
+      const newRoot: TreeNode = {
+        id: Math.random().toString(36).substr(2, 9),
+        value: values[0],
+        left: null,
+        right: null,
+        x: 0, y: 0
+      };
+
+      const insertHelper = (node: TreeNode, val: number) => {
+         if (val < node.value) {
+           if (!node.left) node.left = { id: Math.random().toString(36).substr(2, 9), value: val, left: null, right: null, x: 0, y: 0 };
+           else insertHelper(node.left, val);
+         } else if (val > node.value) {
+           if (!node.right) node.right = { id: Math.random().toString(36).substr(2, 9), value: val, left: null, right: null, x: 0, y: 0 };
+           else insertHelper(node.right, val);
+         }
+      };
+
+      for (let i = 1; i < values.length; i++) {
+        insertHelper(newRoot, values[i]);
+      }
+      
+      setRoot(newRoot);
+      setMessage(`Built tree from ${values.length} values.`);
+    }, 100);
+  };
+
+  const highlightValue = (val: number) => {
+    setExternalHighlightVal(val);
+    // Auto-clear highlight after 3 seconds
+    setTimeout(() => setExternalHighlightVal(null), 3000);
+  };
+
   return {
     visualNodes,
     visualEdges,
@@ -297,6 +343,8 @@ export const useBinaryTree = () => {
     search,
     delete: remove,
     clear,
+    buildTree,
+    highlightValue,
     operation,
     message,
     speed,

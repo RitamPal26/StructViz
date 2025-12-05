@@ -1,5 +1,8 @@
 {
   "name": "StructViz AI",
   "description": "An interactive educational platform for visualizing and understanding data structures.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
 }
