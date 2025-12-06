@@ -1,4 +1,4 @@
-import { Network, Link2, Layers, ListEnd, Share2, Hash, Triangle, Zap, Brain, Globe, Briefcase, Code2, Cpu, BarChart, GitMerge, BarChart3, Scale, Grid3x3 } from 'lucide-react';
+import { Network, Link2, Layers, ListEnd, Share2, Hash, Triangle, Zap, Brain, Globe, Briefcase, Code2, Cpu, BarChart, GitMerge, BarChart3, Scale, Grid3x3, Split } from 'lucide-react';
 import { DataStructure, NavItem } from './types';
 
 export const ANIMATION_CONFIG = {
@@ -14,6 +14,12 @@ export const ANIMATION_CONFIG = {
 };
 
 export const DATA_STRUCTURES: DataStructure[] = [
+  {
+    id: 'segment-tree',
+    title: 'Segment Tree',
+    description: 'Efficiently query ranges and update values using a hierarchical tree structure with lazy propagation.',
+    icon: Split
+  },
   {
     id: 'matrix',
     title: 'Matrix Operations',
