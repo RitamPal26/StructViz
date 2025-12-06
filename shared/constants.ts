@@ -1,4 +1,4 @@
-import { Network, Link2, Layers, ListEnd, Share2, Hash, Triangle, Zap, Brain, Globe, Briefcase, Code2, Cpu, BarChart, GitMerge, BarChart3 } from 'lucide-react';
+import { Network, Link2, Layers, ListEnd, Share2, Hash, Triangle, Zap, Brain, Globe, Briefcase, Code2, Cpu, BarChart, GitMerge, BarChart3, Scale } from 'lucide-react';
 import { DataStructure, NavItem } from './types';
 
 export const ANIMATION_CONFIG = {
@@ -14,6 +14,12 @@ export const ANIMATION_CONFIG = {
 };
 
 export const DATA_STRUCTURES: DataStructure[] = [
+  {
+    id: 'avl-tree',
+    title: 'AVL Tree',
+    description: 'Master self-balancing binary search trees. Visualize rotations (LL, RR, LR, RL) that keep lookup times optimal.',
+    icon: Scale
+  },
   {
     id: 'sorting',
     title: 'Sorting Algorithms',

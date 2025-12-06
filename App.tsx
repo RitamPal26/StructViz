@@ -19,6 +19,7 @@ const HashTableVisualizer = lazy(() => import('./features/hash-table-visualizer/
 const HeapVisualizer = lazy(() => import('./features/heap-visualizer/HeapVisualizer').then(module => ({ default: module.HeapVisualizer })));
 const TrieVisualizer = lazy(() => import('./features/trie-visualizer/TrieVisualizer').then(module => ({ default: module.TrieVisualizer })));
 const SortingVisualizer = lazy(() => import('./features/sorting-visualizer/SortingVisualizer').then(module => ({ default: module.SortingVisualizer })));
+const AVLVisualizer = lazy(() => import('./features/avl-tree-visualizer/AVLVisualizer').then(module => ({ default: module.AVLVisualizer })));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -54,6 +55,8 @@ const App: React.FC = () => {
         return <TrieVisualizer onBack={() => setCurrentView('landing')} />;
       case 'sorting':
         return <SortingVisualizer onBack={() => setCurrentView('landing')} />;
+      case 'avl-tree':
+        return <AVLVisualizer onBack={() => setCurrentView('landing')} />;
       case 'landing':
       default:
         return <LandingPage onNavigate={setCurrentView} />;
