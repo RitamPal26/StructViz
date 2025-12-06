@@ -150,8 +150,8 @@ export const HeapVisualizer: React.FC<HeapVisualizerProps> = ({ onBack }) => {
         <Sidebar />
 
         <ChatPanel 
-          context={`Binary Heap (${heapType} heap). Operations: Insert (Bubble Up), Extract (Bubble Down).`}
-          onHighlightNode={() => {}}
+          context={`Binary Heap (${heapType} heap). A complete binary tree. ${heapType === 'min' ? 'Parent <= Children' : 'Parent >= Children'}. Operations: Insert (Bubble Up), Extract Root (Bubble Down), Heap Sort.`}
+          onHighlightNode={(val) => insert(val)}
         />
       </div>
     </div>

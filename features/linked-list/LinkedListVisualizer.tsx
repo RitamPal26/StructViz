@@ -8,6 +8,7 @@ import { Sidebar } from './components/Sidebar';
 import { Button } from '../../shared/components/Button';
 import { Header } from '../../shared/components/Header';
 import { LinkedListNode } from './types';
+import { ChatPanel } from '../ai-tutor/ChatPanel';
 
 interface LinkedListVisualizerProps {
   onBack: () => void;
@@ -184,6 +185,11 @@ export const LinkedListVisualizer: React.FC<LinkedListVisualizerProps> = ({ onBa
         </main>
 
         <Sidebar />
+        
+        <ChatPanel 
+          context="Singly Linked List. A linear collection of nodes where each node points to the next. Key operations: Insert Head (O(1)), Insert Tail (O(n) without tail pointer), Delete (O(n) search time), Reverse. Memory is dynamic and non-contiguous."
+          onHighlightNode={(val) => actions.insertTail(val)}
+        />
       </div>
     </div>
   );

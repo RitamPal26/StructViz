@@ -156,7 +156,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ onBack }) => {
         />
 
         <ChatPanel 
-          context="Graph Theory. Nodes, Edges, BFS, DFS, Dijkstra."
+          context="Graph Data Structure. A set of nodes (vertices) and edges. Algorithms: BFS (Breadth-First Search uses Queue), DFS (Depth-First Search uses Stack), Dijkstra (Finds shortest path uses Priority Queue)."
         />
       </div>
     </div>

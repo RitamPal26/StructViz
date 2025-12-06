@@ -123,7 +123,7 @@ export const QueueVisualizer: React.FC<QueueVisualizerProps> = ({ onBack }) => {
         <QueueSidebar mode={mode} />
 
         <ChatPanel 
-          context={`Queue Data Structure (${mode} mode). Concepts: FIFO, Enqueue, Dequeue.`} 
+          context={`Queue Data Structure. Current Mode: ${mode}. FIFO (First In, First Out). Operations: Enqueue (add to back), Dequeue (remove from front), Peek. Circular queues reuse empty slots. Priority queues order by importance.`} 
           onHighlightNode={(val) => enqueue(val.toString())} 
         />
       </div>

@@ -147,7 +147,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ onBack }) => {
 
         {/* AI Tutor Integration */}
         <ChatPanel 
-          context="Binary Search Trees" 
+          context="Binary Search Tree (BST). Nodes have at most two children. Left child < Parent < Right child. Operations: Insert, Delete, Search. Time Complexity: O(log n) average case, O(n) worst case." 
           onHighlightNode={highlightValue}
           onBuildStructure={buildTree}
         />

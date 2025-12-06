@@ -134,7 +134,7 @@ export const HashTableVisualizer: React.FC<HashTableVisualizerProps> = ({ onBack
         />
 
         <ChatPanel 
-          context={`Hash Table. Method: ${method === 'chaining' ? 'Chaining' : 'Linear Probing'}. Load Factor: ${loadFactor.toFixed(2)}.`} 
+          context={`Hash Table Data Structure. Maps keys to values using a Hash Function. Collision Resolution Method: ${method === 'chaining' ? 'Chaining (Linked Lists)' : 'Linear Probing (Open Addressing)'}. Load Factor = Items / Buckets (Current: ${loadFactor.toFixed(2)}). Maintain Load Factor < 0.7 for O(1) performance.`} 
           onHighlightNode={() => {}} 
         />
       </div>

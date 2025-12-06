@@ -127,7 +127,7 @@ export const StackVisualizer: React.FC<StackVisualizerProps> = ({ onBack }) => {
         <StackSidebar />
 
         <ChatPanel 
-          context="Stack Data Structure (LIFO)" 
+          context="Stack Data Structure. Follows LIFO (Last In, First Out). Operations: Push (insert at top), Pop (remove from top), Peek (view top). All operations are O(1). Applications: Undo/Redo, Call Stack, Expression Parsing." 
           onHighlightNode={(val) => push(val.toString())} 
         />
       </div>
