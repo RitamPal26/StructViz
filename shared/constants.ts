@@ -1,5 +1,5 @@
-import { Network, Link2, Layers, ListEnd, Share2, Hash, Triangle } from 'lucide-react';
-import { DataStructure } from './types';
+import { Network, Link2, Layers, ListEnd, Share2, Hash, Triangle, Zap, Brain, Globe, Briefcase, Code2, Cpu, BarChart } from 'lucide-react';
+import { DataStructure, NavItem } from './types';
 
 export const ANIMATION_CONFIG = {
   duration: {
@@ -58,8 +58,45 @@ export const DATA_STRUCTURES: DataStructure[] = [
   }
 ];
 
-export const NAV_ITEMS = [
-  { label: 'Home', href: '#' },
-  { label: 'About', href: '#about' },
-  { label: 'Resources', href: '#resources' },
+export const NAV_ITEMS: NavItem[] = [
+  { label: 'Home', view: 'landing' },
+  { label: 'About', view: 'about' },
+];
+
+export const FEATURES = [
+  {
+    icon: Zap,
+    title: 'Interactive Visualizations',
+    desc: 'Don’t just read code. Watch algorithms execute step-by-step with smooth, high-frame-rate animations.'
+  },
+  {
+    icon: Brain,
+    title: 'AI Tutor Mode',
+    desc: 'Stuck? Ask our Gemini-powered AI tutor for instant hints, complexity analysis, and code explanations.'
+  },
+  {
+    icon: Globe,
+    title: 'Real-World Examples',
+    desc: 'Understand how data structures power the software you use daily, from browser history to social networks.'
+  },
+  {
+    icon: Briefcase,
+    title: 'Interview Ready',
+    desc: 'Master the patterns and fundamental concepts needed to ace technical interviews at top tech companies.'
+  }
+];
+
+export const TECH_STACK = [
+  { name: 'React 18', category: 'Frontend' },
+  { name: 'TypeScript', category: 'Language' },
+  { name: 'Framer Motion', category: 'Animation' },
+  { name: 'Gemini 3 Pro', category: 'AI Model' },
+  { name: 'Tailwind CSS', category: 'Styling' },
+  { name: 'GSAP', category: 'Effects' }
+];
+
+export const STATS = [
+  { value: '6+', label: 'Data Structures' },
+  { value: 'AI', label: 'Real-Time Explanations' },
+  { value: '100%', label: 'Free & Open Source' },
 ];

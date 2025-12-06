@@ -1,6 +1,6 @@
 import { LucideIcon } from 'lucide-react';
 
-export type ViewType = 'landing' | 'binary-tree' | 'linked-list' | 'stack' | 'queue' | 'graph' | 'hash-table' | 'heap';
+export type ViewType = 'landing' | 'about' | 'binary-tree' | 'linked-list' | 'stack' | 'queue' | 'graph' | 'hash-table' | 'heap';
 
 export interface DataStructure {
   id: ViewType;
@@ -11,5 +11,5 @@ export interface DataStructure {
 
 export interface NavItem {
   label: string;
-  href: string;
+  view: ViewType;
 }

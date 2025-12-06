@@ -1,5 +1,4 @@
 import React, { useState, Suspense, lazy } from 'react';
-import { LandingPage } from './features/landing/LandingPage';
 import { ViewType } from './shared/types';
 import { ErrorBoundary } from './shared/components/ErrorBoundary';
 import { Loader2 } from 'lucide-react';
@@ -7,7 +6,10 @@ import { SoundProvider } from './shared/context/SoundContext';
 import { PageTransition } from './shared/components/PageTransition';
 import { AnimatePresence } from 'framer-motion';
 
-// Lazy load visualizers
+// Lazy load pages and visualizers
+const LandingPage = lazy(() => import('./features/landing/LandingPage'));
+const AboutPage = lazy(() => import('./features/about/AboutPage'));
+
 const TreeVisualizer = lazy(() => import('./features/tree-visualizer/TreeVisualizer').then(module => ({ default: module.TreeVisualizer })));
 const LinkedListVisualizer = lazy(() => import('./features/linked-list/LinkedListVisualizer').then(module => ({ default: module.LinkedListVisualizer })));
 const StackVisualizer = lazy(() => import('./features/stack-visualizer/StackVisualizer').then(module => ({ default: module.StackVisualizer })));
@@ -20,7 +22,7 @@ const LoadingFallback = () => (
   <div className="min-h-screen bg-gray-900 flex items-center justify-center">
     <div className="flex flex-col items-center gap-4">
       <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
-      <span className="text-gray-400 font-medium">Loading Visualizer...</span>
+      <span className="text-gray-400 font-medium">Loading...</span>
     </div>
   </div>
 );
@@ -30,6 +32,8 @@ const App: React.FC = () => {
 
   const renderView = () => {
     switch (currentView) {
+      case 'about':
+        return <AboutPage onNavigate={setCurrentView} />;
       case 'binary-tree':
         return <TreeVisualizer onBack={() => setCurrentView('landing')} />;
       case 'linked-list':
