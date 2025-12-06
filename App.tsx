@@ -8,6 +8,7 @@ import { GraphVisualizer } from './features/graph-visualizer/GraphVisualizer';
 import { HashTableVisualizer } from './features/hash-table-visualizer/HashTableVisualizer';
 import { HeapVisualizer } from './features/heap-visualizer/HeapVisualizer';
 import { ViewType } from './shared/types';
+import { ErrorBoundary } from './shared/components/ErrorBoundary';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewType>('landing');
@@ -35,9 +36,9 @@ const App: React.FC = () => {
   };
 
   return (
-    <>
+    <ErrorBoundary>
       {renderView()}
-    </>
+    </ErrorBoundary>
   );
 };
 

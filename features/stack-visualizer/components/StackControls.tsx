@@ -22,8 +22,13 @@ export const StackControls: React.FC<StackControlsProps> = ({
   const isBusy = operation !== 'idle';
 
   const handlePush = () => {
-    if (inputValue.trim()) {
-      onPush(inputValue);
+    const trimmed = inputValue.trim();
+    if (trimmed) {
+      if (trimmed.length > 20) {
+        alert("Please enter a shorter value (max 20 chars)");
+        return;
+      }
+      onPush(trimmed);
       setInputValue('');
     } else {
       onPush(Math.floor(Math.random() * 100).toString());

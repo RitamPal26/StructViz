@@ -2,7 +2,6 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { TreeNode, VisualNode, VisualEdge, TreeOperation } from '../types';
 
 const FRAME_WIDTH = 1000;
-const NODE_RADIUS = 25;
 const VERTICAL_SPACING = 80;
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -21,11 +20,20 @@ export const useBinaryTree = () => {
   const [modifyingNodeId, setModifyingNodeId] = useState<string | null>(null);
   const [externalHighlightVal, setExternalHighlightVal] = useState<number | null>(null);
 
-  // Refs for async access to latest state
+  // Refs for async access to latest state and mounting status
   const speedRef = useRef(speed);
   speedRef.current = speed;
+  const isMounted = useRef(true);
 
-  const wait = async () => await sleep(speedRef.current);
+  useEffect(() => {
+    isMounted.current = true;
+    return () => { isMounted.current = false; };
+  }, []);
+
+  const wait = async () => {
+    await sleep(speedRef.current);
+    if (!isMounted.current) throw new Error('Unmounted');
+  };
 
   // Layout Algorithm
   const calculateLayout = useCallback((node: TreeNode | null, x: number, y: number, level: number, parentX?: number): { nodes: VisualNode[], edges: VisualEdge[] } => {
@@ -88,207 +96,215 @@ export const useBinaryTree = () => {
 
   const insert = async (value: number, animate = true) => {
     if (operation !== 'idle' && animate) return;
-    if (animate) setOperation('inserting');
-    
-    const newNode: TreeNode = {
-      id: Math.random().toString(36).substr(2, 9),
-      value,
-      left: null,
-      right: null,
-      x: 0, 
-      y: 0
-    };
-
-    if (!root) {
-      if (animate) {
-        setMessage(`Tree is empty. Setting ${value} as root.`);
-        await wait();
-      }
-      setRoot(newNode);
-      if (animate) {
-        setFoundNodeId(newNode.id);
-        setMessage(`Inserted ${value}.`);
-        setOperation('idle');
-      }
-      return;
-    }
-
-    // Interactive traversal logic (same as before but can be skipped)
-    let current = root;
-    
-    // Simple recursive insert for bulk operations without animation
-    const recursiveInsert = (node: TreeNode, val: number) => {
-      if (val < node.value) {
-        if (!node.left) node.left = { id: Math.random().toString(36).substr(2, 9), value: val, left: null, right: null, x: 0, y: 0 };
-        else recursiveInsert(node.left, val);
-      } else if (val > node.value) {
-        if (!node.right) node.right = { id: Math.random().toString(36).substr(2, 9), value: val, left: null, right: null, x: 0, y: 0 };
-        else recursiveInsert(node.right, val);
-      }
-    };
-
-    if (!animate) {
-      // Create deep copy to trigger React update
-      // A proper deep copy function would be better, but for this strict structure:
-      // We will just re-insert everything into a new root.
-      // Actually, since we are mutating 'root' in the recursiveInsert above (if root exists), we need to trigger update.
-      // A better way for bulk build is to reset and build.
-      recursiveInsert(root, value);
-      setRoot({ ...root }); 
-      return;
-    }
-
-    // ... (Keep existing animated insert logic for manual single interactions)
-    // For brevity, reusing the simplified recursive logic for this update context if animate is false
-    // But the original file had full animation code. I should preserve it.
-    
-    // Full Animation Logic:
-    setMessage(`Inserting ${value}...`);
-    setActiveNodeId(null);
-    setFoundNodeId(null);
-    
-    while (true) {
-      setActiveNodeId(current.id);
+    try {
+      if (animate) setOperation('inserting');
       
-      if (value === current.value) {
-        setMessage(`${value} already exists.`);
-        setFoundNodeId(current.id);
-        await wait();
-        setOperation('idle');
+      const newNode: TreeNode = {
+        id: Math.random().toString(36).substr(2, 9),
+        value,
+        left: null,
+        right: null,
+        x: 0, 
+        y: 0
+      };
+
+      if (!root) {
+        if (animate) {
+          setMessage(`Tree is empty. Setting ${value} as root.`);
+          await wait();
+        }
+        setRoot(newNode);
+        if (animate) {
+          setFoundNodeId(newNode.id);
+          setMessage(`Inserted ${value}.`);
+          setOperation('idle');
+        }
         return;
       }
 
-      if (value < current.value) {
-        setMessage(`${value} < ${current.value}. Going Left.`);
-        await wait();
-        if (!current.left) {
-          current.left = newNode;
-          break;
+      // Animated traversal
+      if (animate) {
+        let current = root;
+        setMessage(`Inserting ${value}...`);
+        setActiveNodeId(null);
+        setFoundNodeId(null);
+        
+        while (true) {
+          setActiveNodeId(current.id);
+          
+          if (value === current.value) {
+            setMessage(`${value} already exists.`);
+            setFoundNodeId(current.id);
+            await wait();
+            setOperation('idle');
+            return;
+          }
+
+          if (value < current.value) {
+            setMessage(`${value} < ${current.value}. Going Left.`);
+            await wait();
+            if (!current.left) {
+              current.left = newNode;
+              break;
+            }
+            current = current.left;
+          } else {
+            setMessage(`${value} > ${current.value}. Going Right.`);
+            await wait();
+            if (!current.right) {
+              current.right = newNode;
+              break;
+            }
+            current = current.right;
+          }
         }
-        current = current.left;
+        setRoot({ ...root }); // Trigger update
+        setMessage(`Inserted ${value}.`);
+        setFoundNodeId(newNode.id);
+        setActiveNodeId(null);
+        await wait();
+        setFoundNodeId(null);
+        setOperation('idle');
       } else {
-        setMessage(`${value} > ${current.value}. Going Right.`);
-        await wait();
-        if (!current.right) {
-          current.right = newNode;
-          break;
-        }
-        current = current.right;
+        // Bulk insert logic (no animation)
+        const recursiveInsert = (node: TreeNode, val: number) => {
+          if (val === node.value) return; // No duplicates
+          if (val < node.value) {
+            if (!node.left) node.left = { id: Math.random().toString(36).substr(2, 9), value: val, left: null, right: null, x: 0, y: 0 };
+            else recursiveInsert(node.left, val);
+          } else if (val > node.value) {
+            if (!node.right) node.right = { id: Math.random().toString(36).substr(2, 9), value: val, left: null, right: null, x: 0, y: 0 };
+            else recursiveInsert(node.right, val);
+          }
+        };
+        const newRoot = { ...root };
+        recursiveInsert(newRoot, value);
+        setRoot(newRoot);
       }
+    } catch (e) {
+      // Unmounted during animation
     }
-    setRoot({ ...root });
-    setMessage(`Inserted ${value}.`);
-    setFoundNodeId(newNode.id);
-    setActiveNodeId(null);
-    await wait();
-    setFoundNodeId(null);
-    setOperation('idle');
   };
 
   const search = async (value: number) => {
     if (operation !== 'idle' || !root) return;
-    setOperation('searching');
-    setMessage(`Searching for ${value}...`);
-    setActiveNodeId(null);
-    setFoundNodeId(null);
-
-    let current: TreeNode | null = root;
-    let found = false;
-
-    while (current) {
-      setActiveNodeId(current.id);
-      await wait();
-
-      if (value === current.value) {
-        setMessage(`Found ${value}!`);
-        setFoundNodeId(current.id);
-        found = true;
-        break;
-      } else if (value < current.value) {
-        setMessage(`${value} < ${current.value}. Going Left.`);
-        current = current.left;
-      } else {
-        setMessage(`${value} > ${current.value}. Going Right.`);
-        current = current.right;
-      }
-    }
-
-    if (!found) {
-      setMessage(`${value} not found in the tree.`);
+    try {
+      setOperation('searching');
+      setMessage(`Searching for ${value}...`);
       setActiveNodeId(null);
+      setFoundNodeId(null);
+
+      let current: TreeNode | null = root;
+      let found = false;
+
+      while (current) {
+        setActiveNodeId(current.id);
+        await wait();
+
+        if (value === current.value) {
+          setMessage(`Found ${value}!`);
+          setFoundNodeId(current.id);
+          found = true;
+          break;
+        } else if (value < current.value) {
+          setMessage(`${value} < ${current.value}. Going Left.`);
+          current = current.left;
+        } else {
+          setMessage(`${value} > ${current.value}. Going Right.`);
+          current = current.right;
+        }
+      }
+
+      if (!found) {
+        setMessage(`${value} not found in the tree.`);
+        setActiveNodeId(null);
+      }
+      
+      await wait();
+      setOperation('idle');
+    } catch (e) {
+      // Unmounted
     }
-    
-    await wait();
-    setOperation('idle');
   };
 
   const deleteNode = (node: TreeNode | null, value: number): { node: TreeNode | null, deleted: boolean } => {
     if (!node) return { node: null, deleted: false };
 
-    if (value < node.value) {
-      const { node: newLeft, deleted } = deleteNode(node.left, value);
-      node.left = newLeft;
-      return { node, deleted };
-    } else if (value > node.value) {
-      const { node: newRight, deleted } = deleteNode(node.right, value);
-      node.right = newRight;
-      return { node, deleted };
+    // Use a new object for immutability at this level
+    const currentNode = { ...node };
+
+    if (value < currentNode.value) {
+      const { node: newLeft, deleted } = deleteNode(currentNode.left, value);
+      currentNode.left = newLeft;
+      return { node: currentNode, deleted };
+    } else if (value > currentNode.value) {
+      const { node: newRight, deleted } = deleteNode(currentNode.right, value);
+      currentNode.right = newRight;
+      return { node: currentNode, deleted };
     } else {
-      if (!node.left && !node.right) {
+      // Node found
+      if (!currentNode.left && !currentNode.right) {
         return { node: null, deleted: true };
       }
-      if (!node.left) return { node: node.right, deleted: true };
-      if (!node.right) return { node: node.left, deleted: true };
+      if (!currentNode.left) return { node: currentNode.right, deleted: true };
+      if (!currentNode.right) return { node: currentNode.left, deleted: true };
 
-      let temp = node.right;
+      // Two children: find min in right subtree
+      let temp = currentNode.right;
       while (temp.left) temp = temp.left;
       
-      node.value = temp.value; 
-      const { node: newRight } = deleteNode(node.right, temp.value);
-      node.right = newRight;
-      return { node, deleted: true };
+      currentNode.value = temp.value; 
+      const { node: newRight } = deleteNode(currentNode.right, temp.value);
+      currentNode.right = newRight;
+      return { node: currentNode, deleted: true };
     }
   };
 
   const remove = async (value: number) => {
     if (operation !== 'idle' || !root) return;
-    setOperation('deleting');
-    setMessage(`Searching for ${value} to delete...`);
-    
-    let current: TreeNode | null = root;
-    let foundNode: TreeNode | null = null;
+    try {
+      setOperation('deleting');
+      setMessage(`Searching for ${value} to delete...`);
+      
+      // Animation: Search phase
+      let current: TreeNode | null = root;
+      let foundNode: TreeNode | null = null;
 
-    while (current) {
-      setActiveNodeId(current.id);
-      await wait();
-
-      if (value === current.value) {
-        foundNode = current;
-        setModifyingNodeId(current.id);
-        setMessage(`Found ${value}. Deleting...`);
+      while (current) {
+        setActiveNodeId(current.id);
         await wait();
-        break;
-      } else if (value < current.value) {
-        current = current.left;
-      } else {
-        current = current.right;
+
+        if (value === current.value) {
+          foundNode = current;
+          setModifyingNodeId(current.id);
+          setMessage(`Found ${value}. Deleting...`);
+          await wait();
+          break;
+        } else if (value < current.value) {
+          current = current.left;
+        } else {
+          current = current.right;
+        }
       }
-    }
 
-    if (!foundNode) {
-      setMessage(`Node ${value} not found.`);
+      if (!foundNode) {
+        setMessage(`Node ${value} not found.`);
+        setActiveNodeId(null);
+        setOperation('idle');
+        return;
+      }
+
+      // Logic: Update root with new structure
+      const { node: newRoot } = deleteNode(root, value); // Pass root directly as deleteNode handles copying 
+      
+      setRoot(newRoot);
+      setModifyingNodeId(null);
       setActiveNodeId(null);
+      setMessage(`Deleted ${value}.`);
       setOperation('idle');
-      return;
+    } catch (e) {
+      // Unmounted
     }
-
-    const { node: newRoot } = deleteNode({ ...root }, value);
-    
-    setRoot(newRoot);
-    setModifyingNodeId(null);
-    setActiveNodeId(null);
-    setMessage(`Deleted ${value}.`);
-    setOperation('idle');
   };
 
   const clear = () => {
@@ -300,7 +316,7 @@ export const useBinaryTree = () => {
     clear();
     // Use a small delay to ensure state clears before rebuilding
     setTimeout(() => {
-      // Reconstruct manually to avoid animation delays
+      if (!isMounted.current) return;
       if (values.length === 0) return;
       
       const newRoot: TreeNode = {
@@ -332,8 +348,9 @@ export const useBinaryTree = () => {
 
   const highlightValue = (val: number) => {
     setExternalHighlightVal(val);
-    // Auto-clear highlight after 3 seconds
-    setTimeout(() => setExternalHighlightVal(null), 3000);
+    setTimeout(() => {
+      if (isMounted.current) setExternalHighlightVal(null);
+    }, 3000);
   };
 
   return {

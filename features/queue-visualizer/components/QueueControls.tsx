@@ -26,8 +26,20 @@ export const QueueControls: React.FC<QueueControlsProps> = ({
   const isBusy = operation !== 'idle';
 
   const handleEnqueue = () => {
-    onEnqueue(inputValue || Math.floor(Math.random() * 100).toString());
-    setInputValue('');
+    const trimmed = inputValue.trim();
+    if (trimmed) {
+      if (trimmed.length > 15) {
+        alert("Please enter a shorter value (max 15 chars)");
+        return;
+      }
+      onEnqueue(trimmed);
+      setInputValue('');
+    } else {
+      // Random value logic inside hook or here? Hook handles random if undefined, 
+      // but UI handles specific input. Let's send random if empty is meant to be random, 
+      // or block empty. Hook handles it, so we'll just block empty spaces.
+      onEnqueue(Math.floor(Math.random() * 100).toString());
+    }
   };
 
   return (

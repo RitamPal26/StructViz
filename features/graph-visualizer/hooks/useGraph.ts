@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { GraphNode, GraphEdge, AlgorithmStep, AlgorithmType, GraphState } from '../types';
 
 const INITIAL_NODES: GraphNode[] = [

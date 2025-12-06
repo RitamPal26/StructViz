@@ -29,6 +29,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   const handleAction = (action: (val: number) => void) => {
     const val = parseInt(inputValue);
     if (!isNaN(val)) {
+      if (val > 999 || val < -999) {
+        alert("Please enter a value between -999 and 999");
+        return;
+      }
       action(val);
       setInputValue('');
     }

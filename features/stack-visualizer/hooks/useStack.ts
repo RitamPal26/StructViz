@@ -1,10 +1,8 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { StackItem, StackOperation } from '../types';
 
 const MAX_SIZE = 10;
 const SLEEP_TIME = 800;
-
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const useStack = () => {
   const [stack, setStack] = useState<StackItem[]>([]);
@@ -15,66 +13,99 @@ export const useStack = () => {
   const stackRef = useRef(stack);
   stackRef.current = stack;
 
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => { isMounted.current = false; };
+  }, []);
+
+  const sleep = async (ms: number) => {
+    await new Promise(resolve => setTimeout(resolve, ms));
+    if (!isMounted.current) throw new Error('Unmounted');
+  };
+
+  const safeSetMessage = (msg: string) => {
+    if (isMounted.current) setMessage(msg);
+  };
+
+  const safeSetOperation = (op: StackOperation) => {
+    if (isMounted.current) setOperation(op);
+  };
+
   const push = async (value: string | number, type: StackItem['type'] = 'default') => {
     if (stackRef.current.length >= MAX_SIZE) {
-      setOperation('overflow');
-      setMessage('Stack Overflow! Maximum capacity reached.');
-      await sleep(1000);
-      setOperation('idle');
+      safeSetOperation('overflow');
+      safeSetMessage('Stack Overflow! Maximum capacity reached.');
+      try { await sleep(1000); } catch(e) { return false; }
+      safeSetOperation('idle');
       return false;
     }
 
-    setOperation('pushing');
-    setMessage(`Pushing "${value}" to stack...`);
-    
-    const newItem: StackItem = {
-      id: Math.random().toString(36).substr(2, 9),
-      value,
-      type
-    };
+    try {
+      safeSetOperation('pushing');
+      safeSetMessage(`Pushing "${value}" to stack...`);
+      
+      const newItem: StackItem = {
+        id: Math.random().toString(36).substr(2, 9),
+        value,
+        type
+      };
 
-    setStack(prev => [...prev, newItem]);
-    await sleep(SLEEP_TIME / 2);
-    setMessage(`Item pushed to index ${stackRef.current.length}`);
-    setOperation('idle');
-    return true;
+      if(isMounted.current) setStack(prev => [...prev, newItem]);
+      await sleep(SLEEP_TIME / 2);
+      
+      safeSetMessage(`Item pushed to index ${stackRef.current.length}`); // Using ref which is updated on render, but here we can trust it approximates
+      safeSetOperation('idle');
+      return true;
+    } catch (e) {
+      return false;
+    }
   };
 
   const pop = async () => {
     if (stackRef.current.length === 0) {
-      setMessage('Stack Underflow! Cannot pop from empty stack.');
-      await sleep(1000);
+      safeSetMessage('Stack Underflow! Cannot pop from empty stack.');
+      try { await sleep(1000); } catch(e) { return null; }
       return null;
     }
 
-    setOperation('popping');
-    const item = stackRef.current[stackRef.current.length - 1];
-    setMessage(`Popping "${item.value}"...`);
+    try {
+      safeSetOperation('popping');
+      const item = stackRef.current[stackRef.current.length - 1];
+      safeSetMessage(`Popping "${item.value}"...`);
 
-    // Visual delay before removal
-    await sleep(SLEEP_TIME / 2);
-    setStack(prev => prev.slice(0, -1));
-    
-    await sleep(SLEEP_TIME / 2);
-    setMessage(`Popped "${item.value}"`);
-    setOperation('idle');
-    return item;
+      // Visual delay before removal
+      await sleep(SLEEP_TIME / 2);
+      if(isMounted.current) setStack(prev => prev.slice(0, -1));
+      
+      await sleep(SLEEP_TIME / 2);
+      safeSetMessage(`Popped "${item.value}"`);
+      safeSetOperation('idle');
+      return item;
+    } catch (e) {
+      return null;
+    }
   };
 
   const peek = async () => {
     if (stackRef.current.length === 0) {
-      setMessage('Stack is empty.');
+      safeSetMessage('Stack is empty.');
       return;
     }
 
-    setOperation('peeking');
-    const index = stackRef.current.length - 1;
-    setPeekIndex(index);
-    setMessage(`Peeking at top: "${stackRef.current[index].value}"`);
-    
-    await sleep(1500);
-    setPeekIndex(null);
-    setOperation('idle');
+    try {
+      safeSetOperation('peeking');
+      const index = stackRef.current.length - 1;
+      if(isMounted.current) setPeekIndex(index);
+      safeSetMessage(`Peeking at top: "${stackRef.current[index].value}"`);
+      
+      await sleep(1500);
+      if(isMounted.current) setPeekIndex(null);
+      safeSetOperation('idle');
+    } catch (e) {
+      // Unmounted
+    }
   };
 
   const clear = () => {
@@ -87,86 +118,94 @@ export const useStack = () => {
 
   const runBrowserScenario = async () => {
     clear();
-    await sleep(500);
-    
-    const sites = ['google.com', 'github.com', 'stackoverflow.com', 'react.dev'];
-    
-    for (const site of sites) {
-      const success = await push(site, 'url');
-      if (!success) break;
-      await sleep(300);
-    }
-    
-    await sleep(1000);
-    setMessage("User clicks Back button...");
-    await sleep(1000);
-    await pop();
-    
-    await sleep(500);
-    setMessage("User clicks Back button...");
-    await sleep(1000);
-    await pop();
+    try {
+      await sleep(500);
+      
+      const sites = ['google.com', 'github.com', 'stackoverflow.com', 'react.dev'];
+      
+      for (const site of sites) {
+        const success = await push(site, 'url');
+        if (!success) break;
+        await sleep(300);
+      }
+      
+      await sleep(1000);
+      safeSetMessage("User clicks Back button...");
+      await sleep(1000);
+      await pop();
+      
+      await sleep(500);
+      safeSetMessage("User clicks Back button...");
+      await sleep(1000);
+      await pop();
+    } catch(e) {}
   };
 
   const runRecursionScenario = async () => {
     clear();
-    await sleep(500);
-    
-    const n = 5;
-    setMessage(`Calculating factorial(${n})...`);
-    await sleep(1000);
-
-    for (let i = n; i >= 1; i--) {
-      await push(`factorial(${i})`, 'code');
+    try {
       await sleep(500);
-    }
+      
+      const n = 5;
+      safeSetMessage(`Calculating factorial(${n})...`);
+      await sleep(1000);
 
-    setMessage("Base case reached. Unwinding stack...");
-    await sleep(1000);
+      for (let i = n; i >= 1; i--) {
+        await push(`factorial(${i})`, 'code');
+        await sleep(500);
+      }
 
-    while (stackRef.current.length > 0) {
-      await pop();
-      await sleep(300);
-    }
-    
-    setMessage("Calculation complete: 120");
-    setOperation('success');
-    await sleep(2000);
-    setOperation('idle');
+      safeSetMessage("Base case reached. Unwinding stack...");
+      await sleep(1000);
+
+      while (stackRef.current.length > 0) {
+        if (!isMounted.current) break;
+        await pop();
+        await sleep(300);
+      }
+      
+      safeSetMessage("Calculation complete: 120");
+      safeSetOperation('success');
+      await sleep(2000);
+      safeSetOperation('idle');
+    } catch(e) {}
   };
 
   const runParenthesesScenario = async () => {
     clear();
-    await sleep(500);
-    
-    const expression = "(()())";
-    setMessage(`Checking balance for: ${expression}`);
-    await sleep(1000);
-
-    for (const char of expression) {
-      if (char === '(') {
-        await push(char, 'paren');
-      } else if (char === ')') {
-        if (stackRef.current.length === 0) {
-          setMessage("Error: Unbalanced closing parenthesis!");
-          setOperation('overflow'); // shake effect
-          return;
-        }
-        setMessage("Found matching pair '()'");
-        await pop();
-      }
+    try {
       await sleep(500);
-    }
+      
+      const expression = "(()())";
+      safeSetMessage(`Checking balance for: ${expression}`);
+      await sleep(1000);
 
-    if (stackRef.current.length === 0) {
-      setMessage("Success: Parentheses are balanced!");
-      setOperation('success');
-    } else {
-      setMessage("Error: Unclosed parentheses remaining!");
-      setOperation('overflow');
-    }
-    await sleep(2000);
-    setOperation('idle');
+      for (const char of expression) {
+        if (!isMounted.current) return;
+        if (char === '(') {
+          await push(char, 'paren');
+        } else if (char === ')') {
+          if (stackRef.current.length === 0) {
+            safeSetMessage("Error: Unbalanced closing parenthesis!");
+            safeSetOperation('overflow'); // shake effect
+            return;
+          }
+          safeSetMessage("Found matching pair '()'");
+          await pop();
+        }
+        await sleep(500);
+      }
+
+      if (stackRef.current.length === 0) {
+        safeSetMessage("Success: Parentheses are balanced!");
+        safeSetOperation('success');
+      } else {
+        safeSetMessage("Error: Unclosed parentheses remaining!");
+        safeSetOperation('overflow');
+      }
+      await sleep(2000);
+      safeSetOperation('idle');
+    } catch(e) {}
   };
 
   return {
