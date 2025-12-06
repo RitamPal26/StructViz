@@ -17,6 +17,8 @@ const QueueVisualizer = lazy(() => import('./features/queue-visualizer/QueueVisu
 const GraphVisualizer = lazy(() => import('./features/graph-visualizer/GraphVisualizer').then(module => ({ default: module.GraphVisualizer })));
 const HashTableVisualizer = lazy(() => import('./features/hash-table-visualizer/HashTableVisualizer').then(module => ({ default: module.HashTableVisualizer })));
 const HeapVisualizer = lazy(() => import('./features/heap-visualizer/HeapVisualizer').then(module => ({ default: module.HeapVisualizer })));
+const TrieVisualizer = lazy(() => import('./features/trie-visualizer/TrieVisualizer').then(module => ({ default: module.TrieVisualizer })));
+const SortingVisualizer = lazy(() => import('./features/sorting-visualizer/SortingVisualizer').then(module => ({ default: module.SortingVisualizer })));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -48,6 +50,10 @@ const App: React.FC = () => {
         return <HashTableVisualizer onBack={() => setCurrentView('landing')} />;
       case 'heap':
         return <HeapVisualizer onBack={() => setCurrentView('landing')} />;
+      case 'trie':
+        return <TrieVisualizer onBack={() => setCurrentView('landing')} />;
+      case 'sorting':
+        return <SortingVisualizer onBack={() => setCurrentView('landing')} />;
       case 'landing':
       default:
         return <LandingPage onNavigate={setCurrentView} />;

@@ -1,4 +1,4 @@
-import { Network, Link2, Layers, ListEnd, Share2, Hash, Triangle, Zap, Brain, Globe, Briefcase, Code2, Cpu, BarChart } from 'lucide-react';
+import { Network, Link2, Layers, ListEnd, Share2, Hash, Triangle, Zap, Brain, Globe, Briefcase, Code2, Cpu, BarChart, GitMerge, BarChart3 } from 'lucide-react';
 import { DataStructure, NavItem } from './types';
 
 export const ANIMATION_CONFIG = {
@@ -14,6 +14,12 @@ export const ANIMATION_CONFIG = {
 };
 
 export const DATA_STRUCTURES: DataStructure[] = [
+  {
+    id: 'sorting',
+    title: 'Sorting Algorithms',
+    description: 'Compare classic sorting algorithms like Quick Sort, Merge Sort, and Bubble Sort in real-time races.',
+    icon: BarChart3
+  },
   {
     id: 'binary-tree',
     title: 'Binary Tree',
@@ -55,6 +61,12 @@ export const DATA_STRUCTURES: DataStructure[] = [
     title: 'Graph Algorithms',
     description: 'Navigate complex networks using BFS, DFS, and Dijkstra pathfinding algorithms.',
     icon: Share2
+  },
+  {
+    id: 'trie',
+    title: 'Trie (Prefix Tree)',
+    description: 'Efficiently store and retrieve keys in a dataset of strings. Essential for autocomplete systems.',
+    icon: GitMerge
   }
 ];
 
