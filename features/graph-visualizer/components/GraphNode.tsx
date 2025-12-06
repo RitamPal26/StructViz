@@ -8,6 +8,7 @@ interface GraphNodeProps {
   onMouseDown: (e: React.MouseEvent) => void;
   onClick: (e: React.MouseEvent) => void;
   onRightClick: (e: React.MouseEvent) => void;
+  onTouchStart: (e: React.TouchEvent) => void;
 }
 
 export const GraphNode: React.FC<GraphNodeProps> = ({ 
@@ -15,7 +16,8 @@ export const GraphNode: React.FC<GraphNodeProps> = ({
   isSelected, 
   onMouseDown, 
   onClick,
-  onRightClick 
+  onRightClick,
+  onTouchStart
 }) => {
   const getColors = () => {
     switch (node.state) {
@@ -43,10 +45,11 @@ export const GraphNode: React.FC<GraphNodeProps> = ({
       onMouseDown={onMouseDown}
       onClick={onClick}
       onContextMenu={onRightClick}
+      onTouchStart={onTouchStart}
     >
       {/* Selection Halo */}
       {isSelected && (
-        <circle r={radius + 4} fill="none" stroke="#38bdf8" strokeWidth="2" strokeDasharray="4 4" className="animate-spin-slow" />
+        <circle r={radius + 6} fill="none" stroke="#38bdf8" strokeWidth="2" strokeDasharray="4 4" className="animate-spin-slow" />
       )}
 
       {/* Main Circle */}
@@ -57,6 +60,7 @@ export const GraphNode: React.FC<GraphNodeProps> = ({
         strokeWidth={isSelected ? 3 : 2}
         animate={{ fill: colors.fill, stroke: colors.stroke }}
         whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
       />
 
       {/* Label */}

@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Book, Brain } from 'lucide-react';
 import { Button } from '../../shared/components/Button';
 import { Header } from '../../shared/components/Header';
+import { MobileLandscapeAlert } from '../../shared/components/MobileLandscapeAlert';
 
 interface TreeVisualizerProps {
   onBack: () => void;
@@ -43,6 +44,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ onBack }) => {
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
       <Header />
+      <MobileLandscapeAlert />
       
       <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative">
         <motion.div

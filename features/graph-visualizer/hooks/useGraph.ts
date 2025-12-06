@@ -75,15 +75,13 @@ export const useGraph = () => {
     }
   };
 
-  // --- Algorithmic Logic ---
-
+  // --- Algorithmic Logic (Same as before) ---
   const generateSteps = (
     algoType: AlgorithmType, 
     startNodeId: string
   ) => {
     const newSteps: AlgorithmStep[] = [];
     
-    // Helper to snapshot
     const record = (
       currentNodes: GraphNode[], 
       currentEdges: GraphEdge[], 
@@ -102,31 +100,27 @@ export const useGraph = () => {
       });
     };
 
-    // Reset states
     let currentNodes: GraphNode[] = nodes.map(n => ({ ...n, state: 'default', distance: Infinity }));
     let currentEdges: GraphEdge[] = edges.map(e => ({ ...e, state: 'default' }));
 
     const startNode = currentNodes.find(n => n.id === startNodeId);
     if (!startNode) return;
 
-    // --- BFS ---
     if (algoType === 'bfs') {
       const queue: string[] = [startNodeId];
       const visited = new Set<string>([startNodeId]);
-      
-      startNode.state = 'start'; // Mark start
+      startNode.state = 'start';
       record(currentNodes, currentEdges, queue, `Start BFS at ${startNode.label}`, 'queue');
 
       while (queue.length > 0) {
-        const currId = queue[0]; // Peek
+        const currId = queue[0];
         const currNode = currentNodes.find(n => n.id === currId)!;
         currNode.state = 'current';
         record(currentNodes, currentEdges, queue, `Visiting ${currNode.label}`, 'queue');
         
-        queue.shift(); // Dequeue
+        queue.shift();
         currNode.state = 'visited';
 
-        // Neighbors
         const neighbors = currentEdges
           .filter(e => e.source === currId || e.target === currId)
           .map(e => {
@@ -138,13 +132,10 @@ export const useGraph = () => {
           if (!visited.has(nextId)) {
             visited.add(nextId);
             queue.push(nextId);
-            
             const nextNode = currentNodes.find(n => n.id === nextId)!;
             nextNode.state = 'queued';
-            
             const edge = currentEdges.find(e => e.id === edgeId)!;
             edge.state = 'traversed';
-            
             record(currentNodes, currentEdges, queue, `Queueing neighbor ${nextNode.label}`, 'queue');
           }
         }
@@ -152,11 +143,9 @@ export const useGraph = () => {
       record(currentNodes, currentEdges, [], "BFS Traversal Complete", 'queue');
     }
 
-    // --- DFS ---
     if (algoType === 'dfs') {
       const stack: string[] = [startNodeId];
       const visited = new Set<string>();
-      
       record(currentNodes, currentEdges, stack, `Push start node ${startNode.label}`, 'stack');
 
       while (stack.length > 0) {
@@ -173,33 +162,25 @@ export const useGraph = () => {
             .filter(e => e.source === currId || e.target === currId)
             .map(e => e.source === currId ? e.target : e.source);
 
-          // Add to stack in reverse order to visit "left-to-right" visually or just normally
           let added = false;
           for (const nextId of neighbors) {
             if (!visited.has(nextId)) {
                stack.push(nextId);
                const nextNode = currentNodes.find(n => n.id === nextId)!;
-               if (nextNode.state !== 'visited') nextNode.state = 'queued'; // Using 'queued' visual for 'in stack'
+               if (nextNode.state !== 'visited') nextNode.state = 'queued';
                added = true;
             }
           }
-          if(added) {
-             record(currentNodes, currentEdges, stack, `Push neighbors of ${currNode.label}`, 'stack');
-          } else {
-             currNode.state = 'visited'; // Backtrack visual, can use different color
-             record(currentNodes, currentEdges, stack, `Backtracking from ${currNode.label}`, 'stack');
-          }
+          if(added) record(currentNodes, currentEdges, stack, `Push neighbors of ${currNode.label}`, 'stack');
+          else record(currentNodes, currentEdges, stack, `Backtracking from ${currNode.label}`, 'stack');
         }
       }
       record(currentNodes, currentEdges, [], "DFS Traversal Complete", 'stack');
     }
 
-    // --- Dijkstra ---
     if (algoType === 'dijkstra') {
       startNode.distance = 0;
       startNode.state = 'start';
-      
-      // Simple Priority Queue { id, dist } sorted by dist
       let pq: { id: string, dist: number }[] = [{ id: startNodeId, dist: 0 }];
       const visited = new Set<string>();
       
@@ -217,7 +198,6 @@ export const useGraph = () => {
         record(currentNodes, currentEdges, pq, `Visit closest node: ${currNode.label} (dist: ${dist})`, 'table');
         currNode.state = 'visited';
 
-        // Neighbors
         const neighbors = currentEdges
           .filter(e => e.source === currId || e.target === currId)
           .map(e => ({ 
@@ -234,10 +214,8 @@ export const useGraph = () => {
              if (newDist < (nextNode.distance || Infinity)) {
                nextNode.distance = newDist;
                pq.push({ id: nextId, dist: newDist });
-               
                const edge = currentEdges.find(e => e.id === edgeId)!;
                edge.state = 'traversed';
-               
                record(currentNodes, currentEdges, pq, `Update ${nextNode.label} dist to ${newDist}`, 'table');
              }
            }
@@ -251,7 +229,7 @@ export const useGraph = () => {
     setIsPlaying(true);
   };
 
-  // --- Interaction Handlers ---
+  // --- Interaction Handlers (Mouse & Touch) ---
 
   const handleNodeMouseDown = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -262,13 +240,9 @@ export const useGraph = () => {
   const handleNodeClick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (isPlaying) return;
-
-    if (selectedNodeId === null) {
-      setSelectedNodeId(id);
-    } else if (selectedNodeId === id) {
-      setSelectedNodeId(null);
-    } else {
-      // Create Edge
+    if (selectedNodeId === null) setSelectedNodeId(id);
+    else if (selectedNodeId === id) setSelectedNodeId(null);
+    else {
       toggleEdge(selectedNodeId, id);
       setSelectedNodeId(null);
     }
@@ -280,21 +254,16 @@ export const useGraph = () => {
     pt.x = e.clientX;
     pt.y = e.clientY;
     const svgP = pt.matrixTransform(e.currentTarget.getScreenCTM()?.inverse());
-    
     dragOffset.current = { x: svgP.x, y: svgP.y };
   };
 
   const handleCanvasMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
     if (!draggingNodeId) return;
-    
     const pt = e.currentTarget.createSVGPoint();
     pt.x = e.clientX;
     pt.y = e.clientY;
     const svgP = pt.matrixTransform(e.currentTarget.getScreenCTM()?.inverse());
-
-    setNodes(prev => prev.map(n => 
-      n.id === draggingNodeId ? { ...n, x: svgP.x, y: svgP.y } : n
-    ));
+    setNodes(prev => prev.map(n => n.id === draggingNodeId ? { ...n, x: svgP.x, y: svgP.y } : n));
   };
 
   const handleCanvasMouseUp = () => {
@@ -307,13 +276,45 @@ export const useGraph = () => {
       setSelectedNodeId(null);
       return;
     }
-    
-    // Add Node
     const pt = e.currentTarget.createSVGPoint();
     pt.x = e.clientX;
     pt.y = e.clientY;
     const svgP = pt.matrixTransform(e.currentTarget.getScreenCTM()?.inverse());
     addNode(svgP.x, svgP.y);
+  };
+
+  // TOUCH HANDLERS
+  const handleNodeTouchStart = (id: string, e: React.TouchEvent) => {
+    e.stopPropagation();
+    if (isPlaying) return;
+    setDraggingNodeId(id);
+    setSelectedNodeId(prev => prev === id ? null : id);
+  };
+
+  const handleCanvasTouchStart = (e: React.TouchEvent<SVGSVGElement>) => {
+    if (isPlaying) return;
+    if (e.touches.length > 1) return; // Allow pinch zoom etc
+    const touch = e.touches[0];
+    const pt = e.currentTarget.createSVGPoint();
+    pt.x = touch.clientX;
+    pt.y = touch.clientY;
+    const svgP = pt.matrixTransform(e.currentTarget.getScreenCTM()?.inverse());
+    dragOffset.current = { x: svgP.x, y: svgP.y };
+  };
+
+  const handleCanvasTouchMove = (e: React.TouchEvent<SVGSVGElement>) => {
+    if (!draggingNodeId) return;
+    // e.preventDefault(); // Warning: Passive event listener
+    const touch = e.touches[0];
+    const pt = e.currentTarget.createSVGPoint();
+    pt.x = touch.clientX;
+    pt.y = touch.clientY;
+    const svgP = pt.matrixTransform(e.currentTarget.getScreenCTM()?.inverse());
+    setNodes(prev => prev.map(n => n.id === draggingNodeId ? { ...n, x: svgP.x, y: svgP.y } : n));
+  };
+
+  const handleCanvasTouchEnd = () => {
+    setDraggingNodeId(null);
   };
 
   // --- Playback Engine ---
@@ -347,9 +348,9 @@ export const useGraph = () => {
     setCurrentStepIndex(0);
     setNodes(prev => prev.map(n => ({...n, state: 'default', distance: undefined})));
     setEdges(prev => prev.map(e => ({...e, state: 'default'})));
+    setSelectedNodeId(null);
   };
 
-  // Load presets
   const loadPreset = (type: 'social' | 'map' | 'tree') => {
     reset();
     if (type === 'tree') {
@@ -367,13 +368,11 @@ export const useGraph = () => {
         { id: 'e4', source: '2', target: '5', weight: 1, state: 'default' }
       ]);
     } else {
-      // Reset to initial for simplicity or add more maps
       setNodes(INITIAL_NODES);
       setEdges(INITIAL_EDGES);
     }
   };
 
-  // Derived state for render
   const currentStep = steps[currentStepIndex];
   const activeNodes = currentStep ? currentStep.graphState.nodes : nodes;
   const activeEdges = currentStep ? currentStep.graphState.edges : edges;
@@ -388,7 +387,6 @@ export const useGraph = () => {
     currentStep,
     speed,
     setSpeed,
-    // Actions
     handlers: {
       handleCanvasClick,
       handleCanvasMouseDown,
@@ -396,6 +394,10 @@ export const useGraph = () => {
       handleCanvasMouseUp,
       handleNodeClick,
       handleNodeMouseDown,
+      handleCanvasTouchStart,
+      handleCanvasTouchMove,
+      handleCanvasTouchEnd,
+      handleNodeTouchStart,
       removeNode
     },
     runAlgorithm: generateSteps,

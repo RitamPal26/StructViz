@@ -8,6 +8,7 @@ import { Button } from '../../shared/components/Button';
 import { Header } from '../../shared/components/Header';
 import { ChatPanel } from '../ai-tutor/ChatPanel';
 import { motion, AnimatePresence } from 'framer-motion';
+import { MobileLandscapeAlert } from '../../shared/components/MobileLandscapeAlert';
 
 interface HeapVisualizerProps {
   onBack: () => void;
@@ -45,6 +46,7 @@ export const HeapVisualizer: React.FC<HeapVisualizerProps> = ({ onBack }) => {
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col">
       <Header />
+      <MobileLandscapeAlert />
       
       <div className="flex-1 flex flex-col lg:flex-row pt-16 lg:h-screen lg:overflow-hidden">
         
