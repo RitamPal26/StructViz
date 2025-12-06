@@ -6,15 +6,17 @@ import { motion } from 'framer-motion';
 interface HashCanvasProps {
   buckets: Bucket[];
   method: CollisionMethod;
+  activeBucketIndex: number | null;
+  collisionIndex: number | null;
 }
 
-export const HashCanvas: React.FC<HashCanvasProps> = ({ buckets, method }) => {
+export const HashCanvas: React.FC<HashCanvasProps> = ({ buckets, method, activeBucketIndex, collisionIndex }) => {
   return (
-    <div className="w-full h-full bg-gray-900 border border-gray-800 rounded-xl p-4 overflow-y-auto">
+    <div className="w-full h-full bg-gray-900 border border-gray-800 rounded-xl p-4 overflow-y-auto custom-scrollbar">
       <div className="max-w-3xl mx-auto space-y-2">
         {/* Header Visual */}
         <div className="flex gap-2 mb-4 ml-10 border-b border-gray-800 pb-2">
-          <span className="text-xs font-mono text-gray-500 w-14 text-center">Bucket</span>
+          <span className="text-xs font-mono text-gray-500 w-14 text-center">Index</span>
           <span className="text-xs font-mono text-gray-500">
              {method === 'chaining' ? 'Linked Chain' : 'Stored Item'}
           </span>
@@ -24,7 +26,9 @@ export const HashCanvas: React.FC<HashCanvasProps> = ({ buckets, method }) => {
           <HashBucket 
             key={bucket.index} 
             bucket={bucket} 
-            method={method} 
+            method={method}
+            isActive={activeBucketIndex === bucket.index}
+            isCollision={collisionIndex === bucket.index}
           />
         ))}
 

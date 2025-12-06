@@ -20,49 +20,58 @@ export const HashTableVisualizer: React.FC<HashTableVisualizerProps> = ({ onBack
     itemsCount,
     loadFactor, 
     method, 
-    setMethod, 
-    operation, 
+    setMethod,
+    activeBucketIndex,
+    collisionIndex,
     message,
     insert,
     search,
-    deleteItem,
     reset,
-    rehash
+    
+    // Playback
+    isPlaying,
+    play,
+    pause,
+    stepForward,
+    stepBackward,
+    currentStepIndex,
+    totalSteps,
+    speed,
+    setSpeed
   } = useHashTable();
 
-  // Demo Scenarios
+  // Enhanced Collision Demo
   const runCollisionDemo = async () => {
     reset();
-    await new Promise(r => setTimeout(r, 500));
-    // Keys that likely collide modulo 10: 10, 20, 30 if hash is numeric
-    // Or for strings: "abc", "bac" might have different hashes, but let's use integers as strings for clarity if logic supports it.
-    // Our hash function supports numeric string parsing.
-    insert("15", "Apple");
-    setTimeout(() => insert("25", "Banana"), 1500); // 15%10=5, 25%10=5
-    setTimeout(() => insert("35", "Cherry"), 3000);
+    setTimeout(() => {
+      // These numbers collide modulo 10 (all end in 5 -> bucket 5)
+      // We process them one by one to let the user play/step through each
+      insert("5", "First");
+      setTimeout(() => insert("15", "Second (Collide)"), 2000);
+      setTimeout(() => insert("25", "Third (Collide)"), 4000);
+    }, 100);
   };
 
   const runDictionaryDemo = async () => {
     reset();
-    await new Promise(r => setTimeout(r, 500));
-    const words = [
-      {k: "cat", v: "meow"},
-      {k: "dog", v: "woof"},
-      {k: "owl", v: "hoot"},
-      {k: "cow", v: "moo"}
-    ];
-    let delay = 0;
-    for(const w of words) {
-      setTimeout(() => insert(w.k, w.v), delay);
-      delay += 1500;
-    }
+    setTimeout(() => {
+      const words = [
+        {k: "apple", v: "fruit"},
+        {k: "apricot", v: "fruit"}, // might collide depending on hash
+        {k: "banana", v: "yellow"}
+      ];
+      let delay = 0;
+      for(const w of words) {
+        setTimeout(() => insert(w.k, w.v), delay);
+        delay += 2500;
+      }
+    }, 100);
   };
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col">
       <Header />
       
-      {/* Layout Fix */}
       <div className="flex-1 flex flex-col lg:flex-row pt-16 lg:h-screen lg:overflow-hidden">
         
         {/* Main Area */}
@@ -77,12 +86,11 @@ export const HashTableVisualizer: React.FC<HashTableVisualizerProps> = ({ onBack
               <h1 className="text-xl sm:text-2xl font-bold">Hash Table</h1>
             </div>
             
-            {/* Scenarios */}
             <div className="flex gap-2">
-              <Button size="sm" variant="secondary" onClick={runCollisionDemo} disabled={operation !== 'idle'}>
+              <Button size="sm" variant="secondary" onClick={runCollisionDemo}>
                 <PlayCircle className="w-4 h-4 mr-2" /> Collision Demo
               </Button>
-              <Button size="sm" variant="secondary" onClick={runDictionaryDemo} disabled={operation !== 'idle'}>
+              <Button size="sm" variant="secondary" onClick={runDictionaryDemo}>
                 <PlayCircle className="w-4 h-4 mr-2" /> Dict Demo
               </Button>
             </div>
@@ -95,31 +103,32 @@ export const HashTableVisualizer: React.FC<HashTableVisualizerProps> = ({ onBack
               <ControlPanel 
                 onInsert={insert}
                 onSearch={search}
-                onDelete={deleteItem}
                 onReset={reset}
                 method={method}
                 onMethodChange={setMethod}
-                operation={operation}
+                // Playback
+                isPlaying={isPlaying}
+                onPlay={play}
+                onPause={pause}
+                onStepForward={stepForward}
+                onStepBackward={stepBackward}
+                currentStep={currentStepIndex}
+                totalSteps={totalSteps}
+                speed={speed}
+                onSpeedChange={setSpeed}
+                message={message}
               />
             </div>
 
             {/* Canvas Area */}
-            <div className="flex-1 p-4 sm:p-8 overflow-auto relative flex flex-col min-h-[300px]">
-              
-              {/* Message Toast */}
-              <div className="text-center mb-4 min-h-[30px]">
-                <motion.div
-                  key={message}
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="inline-block px-4 py-1.5 rounded-full bg-gray-800 border border-gray-700 text-sm font-medium text-primary-300"
-                >
-                  {message}
-                </motion.div>
-              </div>
-
-              <div className="flex-1 overflow-auto relative rounded-xl border border-gray-800 bg-gray-950/50">
-                <HashCanvas buckets={buckets} method={method} />
+            <div className="flex-1 p-4 sm:p-8 overflow-hidden relative flex flex-col min-h-[300px]">
+              <div className="flex-1 overflow-hidden relative rounded-xl border border-gray-800 bg-gray-950/50 shadow-inner">
+                <HashCanvas 
+                  buckets={buckets} 
+                  method={method}
+                  activeBucketIndex={activeBucketIndex}
+                  collisionIndex={collisionIndex}
+                />
               </div>
             </div>
           </div>
@@ -129,12 +138,12 @@ export const HashTableVisualizer: React.FC<HashTableVisualizerProps> = ({ onBack
           itemsCount={itemsCount}
           tableSize={tableSize}
           loadFactor={loadFactor}
-          onRehash={rehash}
-          isBusy={operation !== 'idle'}
+          onRehash={() => {}} // Rehash visualization is complex, keeping simple for now
+          isBusy={isPlaying}
         />
 
         <ChatPanel 
-          context={`Hash Table Data Structure. Maps keys to values using a Hash Function. Collision Resolution Method: ${method === 'chaining' ? 'Chaining (Linked Lists)' : 'Linear Probing (Open Addressing)'}. Load Factor = Items / Buckets (Current: ${loadFactor.toFixed(2)}). Maintain Load Factor < 0.7 for O(1) performance.`} 
+          context={`Hash Table. Method: ${method === 'chaining' ? 'Chaining' : 'Linear Probing'}. Load Factor: ${loadFactor.toFixed(2)}. Hash function maps keys to indices. Collisions occur when two keys map to the same index.`} 
           onHighlightNode={() => {}} 
         />
       </div>
