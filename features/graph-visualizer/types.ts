@@ -23,9 +23,12 @@ export interface GraphState {
   edges: GraphEdge[];
 }
 
+export type DijkstraTableItem = { id: string; dist: number };
+export type StructureState = string[] | DijkstraTableItem[];
+
 export interface AlgorithmStep {
   graphState: GraphState; // Snapshot of nodes/edges states
-  structureState: any[]; // Queue for BFS, Stack for DFS, PriorityQueue for Dijkstra
+  structureState: StructureState; // Queue for BFS, Stack for DFS, PriorityQueue for Dijkstra
   structureType: 'queue' | 'stack' | 'table';
   message: string;
   currentEdgeId?: string | null;

@@ -1,4 +1,4 @@
-import { GoogleGenAI, FunctionDeclaration, Type, Schema } from "@google/genai";
+import { GoogleGenAI, FunctionDeclaration, Type } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -32,10 +32,6 @@ export const generateTutorResponse = async (
   try {
     const model = 'gemini-2.5-flash';
     
-    // Convert simplified history to SDK format if needed, 
-    // but for single turn with context, we can just construct the prompt.
-    // For a real chat session, we would use ai.chats.create().
-    
     const chat = ai.chats.create({
       model,
       config: {
@@ -47,28 +43,25 @@ export const generateTutorResponse = async (
       }
     });
 
-    // Replay history (simplified for this demo)
     for (const msg of history) {
       if (msg.role === 'user') {
         await chat.sendMessage({ message: msg.text });
       }
-      // We skip model turns in replay for simplicity in this stateless wrapper,
-      // or we could maintain the chat object persistently in a hook.
     }
 
     const result = await chat.sendMessage({ message: newMessage });
     
-    // Handle Function Calls
     const functionCalls = result.functionCalls;
     if (functionCalls && functionCalls.length > 0 && onHighlight) {
       for (const call of functionCalls) {
         if (call.name === 'highlightNode') {
-          const args = call.args as any;
-          onHighlight(args.value);
+          // Type guard for unknown
+          const args = call.args as Record<string, unknown>;
+          if (typeof args.value === 'number') {
+             onHighlight(args.value);
+          }
         }
       }
-      // In a full implementation, we would send the function response back.
-      // Here we just return the text response generated alongside or after.
     }
 
     return result.text || "I'm listening...";

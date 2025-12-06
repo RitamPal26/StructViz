@@ -32,16 +32,18 @@ export const useLinkedListAnimation = () => {
 
   // --- ALGORITHMS ---
 
-  const generateSteps = (
+  type RecordFn = (state: ListState, highlightedIds: string[], pointers: { [key: string]: string | null }, message: string) => void;
+
+  const generateSteps = useCallback((
     algoFn: (
       initialState: ListState, 
-      record: (s: ListState, h: string[], p: any, m: string) => void
+      record: RecordFn
     ) => ListState
   ) => {
     const newSteps: AnimationStep[] = [];
     
     // Helper to record a step
-    const record = (state: ListState, highlightedIds: string[], pointers: any, message: string) => {
+    const record: RecordFn = (state, highlightedIds, pointers, message) => {
       // Deep copy state to ensure immutability in history
       const deepNodes = state.nodes.map(n => ({...n}));
       newSteps.push({
@@ -65,14 +67,10 @@ export const useLinkedListAnimation = () => {
     setCurrentStepIndex(0);
     setIsPlaying(true);
     
-    // Update the base state to the result of the operation effectively "committing" it
-    // But we only show it when the animation finishes? 
-    // Actually, usually we want the base state to update ONLY after animation or immediately if we want to skip.
-    // For this design, we will let the timeline drive the view. When animation ends, we sync baseState.
     setBaseState(finalState);
-  };
+  }, [baseState]);
 
-  const insertHead = (value: number) => {
+  const insertHead = useCallback((value: number) => {
     generateSteps((initial, record) => {
       const newNodeId = `n-${Date.now()}`;
       const newNode: LinkedListNode = { id: newNodeId, value, nextId: null };
@@ -90,9 +88,9 @@ export const useLinkedListAnimation = () => {
 
       return { nodes, headId };
     });
-  };
+  }, [generateSteps]);
 
-  const insertTail = (value: number) => {
+  const insertTail = useCallback((value: number) => {
     generateSteps((initial, record) => {
       const newNodeId = `n-${Date.now()}`;
       const newNode: LinkedListNode = { id: newNodeId, value, nextId: null };
@@ -104,7 +102,7 @@ export const useLinkedListAnimation = () => {
         return { nodes, headId: newNodeId };
       }
 
-      let currId = headId;
+      let currId: string | null = headId;
       let curr = nodes.find(n => n.id === currId);
 
       record({ nodes, headId }, [currId], { head: headId, curr: currId }, "Start at Head");
@@ -112,19 +110,19 @@ export const useLinkedListAnimation = () => {
       while (curr && curr.nextId) {
         currId = curr.nextId;
         curr = nodes.find(n => n.id === currId);
-        record({ nodes, headId }, [currId], { head: headId, curr: currId }, "Traverse to next node");
+        record({ nodes, headId }, [currId!], { head: headId, curr: currId }, "Traverse to next node");
       }
 
       if (curr) {
         curr.nextId = newNodeId;
-        record({ nodes, headId }, [currId, newNodeId], { head: headId, curr: currId }, "Link last node to new node");
+        record({ nodes, headId }, [currId!, newNodeId], { head: headId, curr: currId }, "Link last node to new node");
       }
 
       return { nodes, headId };
     });
-  };
+  }, [generateSteps]);
 
-  const deleteNode = (value: number) => {
+  const deleteNode = useCallback((value: number) => {
     generateSteps((initial, record) => {
       let nodes = [...initial.nodes.map(n => ({...n}))];
       let headId = initial.headId;
@@ -173,11 +171,10 @@ export const useLinkedListAnimation = () => {
       record({ nodes, headId }, [], { head: headId }, `Value ${value} not found`);
       return { nodes, headId };
     });
-  };
+  }, [generateSteps]);
 
-  const reverse = () => {
+  const reverse = useCallback(() => {
     generateSteps((initial, record) => {
-      // Create deep copy for mutation
       const nodes = initial.nodes.map(n => ({...n}));
       let headId = initial.headId;
 
@@ -207,65 +204,99 @@ export const useLinkedListAnimation = () => {
 
       return { nodes, headId };
     });
-  };
+  }, [generateSteps]);
 
   // --- PLAYBACK ENGINE ---
 
-  const stop = () => {
+  const stop = useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
     setIsPlaying(false);
-  };
+  }, []);
+
+  const pause = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    setIsPlaying(false);
+  }, []);
 
   const play = useCallback(() => {
+    if (steps.length === 0) return;
+    
     if (currentStepIndex >= steps.length - 1) {
       setCurrentStepIndex(0);
     }
     setIsPlaying(true);
   }, [currentStepIndex, steps.length]);
 
-  const stepForward = () => {
-    stop();
+  const stepForward = useCallback(() => {
+    pause(); // Use pause to avoid setting isPlaying(false) via stop if we wanted to stay in "play mode" but paused. 
+             // Actually standard behavior is to stop playing when manually stepping.
     setCurrentStepIndex(prev => Math.min(prev + 1, steps.length - 1));
-  };
+  }, [pause, steps.length]);
 
-  const stepBackward = () => {
-    stop();
+  const stepBackward = useCallback(() => {
+    pause();
     setCurrentStepIndex(prev => Math.max(prev - 1, 0));
-  };
+  }, [pause]);
 
   useEffect(() => {
-    if (isPlaying) {
+    if (isPlaying && steps.length > 0) {
+      if (timerRef.current) clearInterval(timerRef.current);
+
       timerRef.current = window.setInterval(() => {
         setCurrentStepIndex(prev => {
           if (prev >= steps.length - 1) {
-            stop();
+            if (timerRef.current) {
+              clearInterval(timerRef.current);
+              timerRef.current = null;
+            }
             return prev;
           }
           return prev + 1;
         });
       }, 1000 / speed);
     }
-    return () => stop();
+
+    // Cleanup: Only clear interval, do not stop() which sets state
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
   }, [isPlaying, steps.length, speed]);
 
-  // Keyboard controls
+  // Separate effect to handle end of playback state sync
+  useEffect(() => {
+    if (isPlaying && currentStepIndex >= steps.length - 1 && steps.length > 0) {
+      setIsPlaying(false);
+    }
+  }, [currentStepIndex, isPlaying, steps.length]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Only trigger if no input is focused
+      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) return;
+
       if (e.code === 'Space') {
         e.preventDefault();
-        isPlaying ? stop() : play();
+        isPlaying ? pause() : play();
       } else if (e.code === 'ArrowRight') {
+        e.preventDefault();
         stepForward();
       } else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
         stepBackward();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isPlaying, play]);
+  }, [isPlaying, play, pause, stepForward, stepBackward]);
 
   return {
     currentStep,
@@ -275,7 +306,7 @@ export const useLinkedListAnimation = () => {
     speed,
     setSpeed,
     play,
-    pause: stop,
+    pause,
     stepForward,
     stepBackward,
     actions: { insertHead, insertTail, deleteNode, reverse }

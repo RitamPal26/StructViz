@@ -1,6 +1,18 @@
 import { Network, Link2, Layers, ListEnd, Share2, Hash, Triangle } from 'lucide-react';
 import { DataStructure } from './types';
 
+export const ANIMATION_CONFIG = {
+  duration: {
+    fast: 0.15,
+    medium: 0.5,
+    slow: 0.8
+  },
+  easing: {
+    spring: { type: 'spring', stiffness: 260, damping: 20 },
+    easeInOut: [0.4, 0, 0.2, 1]
+  }
+};
+
 export const DATA_STRUCTURES: DataStructure[] = [
   {
     id: 'binary-tree',

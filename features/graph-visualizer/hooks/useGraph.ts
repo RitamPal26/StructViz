@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { GraphNode, GraphEdge, AlgorithmStep, AlgorithmType, GraphState } from '../types';
+import { GraphNode, GraphEdge, AlgorithmStep, AlgorithmType, GraphState, StructureState, DijkstraTableItem } from '../types';
 
 const INITIAL_NODES: GraphNode[] = [
   { id: 'A', label: 'A', x: 250, y: 100, state: 'default' },
@@ -75,7 +75,8 @@ export const useGraph = () => {
     }
   };
 
-  // --- Algorithmic Logic (Same as before) ---
+  // --- Algorithmic Logic ---
+
   const generateSteps = (
     algoType: AlgorithmType, 
     startNodeId: string
@@ -85,7 +86,7 @@ export const useGraph = () => {
     const record = (
       currentNodes: GraphNode[], 
       currentEdges: GraphEdge[], 
-      structure: any[], 
+      structure: StructureState, 
       message: string,
       structureType: 'queue' | 'stack' | 'table' = 'queue'
     ) => {
@@ -181,7 +182,7 @@ export const useGraph = () => {
     if (algoType === 'dijkstra') {
       startNode.distance = 0;
       startNode.state = 'start';
-      let pq: { id: string, dist: number }[] = [{ id: startNodeId, dist: 0 }];
+      let pq: DijkstraTableItem[] = [{ id: startNodeId, dist: 0 }];
       const visited = new Set<string>();
       
       record(currentNodes, currentEdges, pq, `Initialize distances. Start: 0`, 'table');
@@ -228,8 +229,6 @@ export const useGraph = () => {
     setCurrentStepIndex(0);
     setIsPlaying(true);
   };
-
-  // --- Interaction Handlers (Mouse & Touch) ---
 
   const handleNodeMouseDown = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -283,7 +282,6 @@ export const useGraph = () => {
     addNode(svgP.x, svgP.y);
   };
 
-  // TOUCH HANDLERS
   const handleNodeTouchStart = (id: string, e: React.TouchEvent) => {
     e.stopPropagation();
     if (isPlaying) return;
@@ -293,7 +291,7 @@ export const useGraph = () => {
 
   const handleCanvasTouchStart = (e: React.TouchEvent<SVGSVGElement>) => {
     if (isPlaying) return;
-    if (e.touches.length > 1) return; // Allow pinch zoom etc
+    if (e.touches.length > 1) return;
     const touch = e.touches[0];
     const pt = e.currentTarget.createSVGPoint();
     pt.x = touch.clientX;
@@ -304,7 +302,6 @@ export const useGraph = () => {
 
   const handleCanvasTouchMove = (e: React.TouchEvent<SVGSVGElement>) => {
     if (!draggingNodeId) return;
-    // e.preventDefault(); // Warning: Passive event listener
     const touch = e.touches[0];
     const pt = e.currentTarget.createSVGPoint();
     pt.x = touch.clientX;
@@ -317,8 +314,6 @@ export const useGraph = () => {
     setDraggingNodeId(null);
   };
 
-  // --- Playback Engine ---
-  
   const stop = () => {
     if (timerRef.current) {
       clearInterval(timerRef.current);

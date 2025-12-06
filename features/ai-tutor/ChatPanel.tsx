@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Mic, Image as ImageIcon, X, Sparkles, Loader2, MessageSquare } from 'lucide-react';
 import { generateTutorResponse, analyzeStructureImage, ChatMessage } from '../../services/ai';
-import { Button } from '../../shared/components/Button';
+import { useSound } from '../../shared/context/SoundContext';
 
 interface ChatPanelProps {
   context: string;
@@ -20,16 +20,18 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ context, onHighlightNode, 
   const [isListening, setIsListening] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { play } = useSound();
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, isThinking]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
     
+    play('click');
     const userMsg: ChatMessage = { role: 'user', text: input };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
@@ -44,6 +46,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ context, onHighlightNode, 
 
     setIsThinking(false);
     setMessages(prev => [...prev, { role: 'model', text: response }]);
+    play('success');
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,8 +66,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ context, onHighlightNode, 
       if (numbers && numbers.length > 0) {
         setMessages(prev => [...prev, { role: 'model', text: `I found these numbers: ${numbers.join(', ')}. Building structure now!` }]);
         if (onBuildStructure) onBuildStructure(numbers);
+        play('success');
       } else {
         setMessages(prev => [...prev, { role: 'model', text: "I couldn't quite see a structure in that image. Try drawing clearer numbers!" }]);
+        play('error');
       }
     };
     reader.readAsDataURL(file);
@@ -102,8 +107,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ context, onHighlightNode, 
       <motion.button
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
-        className="fixed bottom-6 right-6 z-50 p-4 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 shadow-2xl text-white hover:scale-110 transition-transform"
-        onClick={() => setIsOpen(!isOpen)}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        className="fixed bottom-6 right-6 z-50 p-4 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 shadow-2xl text-white transition-transform"
+        onClick={() => { setIsOpen(!isOpen); play('click'); }}
       >
         {isOpen ? <X className="w-6 h-6" /> : <Sparkles className="w-6 h-6" />}
       </motion.button>
@@ -136,7 +143,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ context, onHighlightNode, 
                   key={i}
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
                     className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                       msg.role === 'user'
                         ? 'bg-indigo-600 text-white rounded-br-none'
@@ -144,13 +153,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ context, onHighlightNode, 
                     }`}
                   >
                     {msg.text}
-                  </div>
+                  </motion.div>
                 </div>
               ))}
               {isThinking && (
                 <div className="flex justify-start">
-                  <div className="bg-gray-800 rounded-2xl rounded-bl-none px-4 py-3 border border-gray-700">
-                    <Loader2 className="w-5 h-5 text-indigo-400 animate-spin" />
+                  <div className="bg-gray-800 rounded-2xl rounded-bl-none px-4 py-3 border border-gray-700 flex items-center space-x-2">
+                    <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
+                    <span className="text-xs text-gray-400 animate-pulse">Thinking...</span>
                   </div>
                 </div>
               )}
