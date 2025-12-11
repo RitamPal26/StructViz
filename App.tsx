@@ -22,6 +22,8 @@ const SortingVisualizer = lazy(() => import('./features/sorting-visualizer/Sorti
 const AVLVisualizer = lazy(() => import('./features/avl-tree-visualizer/AVLVisualizer').then(module => ({ default: module.AVLVisualizer })));
 const MatrixVisualizer = lazy(() => import('./features/matrix-visualizer/MatrixVisualizer').then(module => ({ default: module.MatrixVisualizer })));
 const SegmentTreeVisualizer = lazy(() => import('./features/segment-tree-visualizer/SegmentTreeVisualizer').then(module => ({ default: module.SegmentTreeVisualizer })));
+const DPVisualizer = lazy(() => import('./features/dp-visualizer/DPVisualizer').then(module => ({ default: module.DPVisualizer })));
+const PathfindingVisualizer = lazy(() => import('./features/pathfinding-visualizer/PathfindingVisualizer').then(module => ({ default: module.PathfindingVisualizer })));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -63,6 +65,10 @@ const App: React.FC = () => {
         return <MatrixVisualizer onBack={() => setCurrentView('landing')} />;
       case 'segment-tree':
         return <SegmentTreeVisualizer onBack={() => setCurrentView('landing')} />;
+      case 'dp':
+        return <DPVisualizer onBack={() => setCurrentView('landing')} />;
+      case 'pathfinding':
+        return <PathfindingVisualizer onBack={() => setCurrentView('landing')} />;
       case 'landing':
       default:
         return <LandingPage onNavigate={setCurrentView} />;

@@ -1,4 +1,4 @@
-import { Network, Link2, Layers, ListEnd, Share2, Hash, Triangle, Zap, Brain, Globe, Briefcase, Code2, Cpu, BarChart, GitMerge, BarChart3, Scale, Grid3x3, Split } from 'lucide-react';
+import { Network, Link2, Layers, ListEnd, Share2, Hash, Triangle, Zap, Brain, Globe, Briefcase, Code2, Cpu, BarChart, GitMerge, BarChart3, Scale, Grid3x3, Split, Table2, Navigation } from 'lucide-react';
 import { DataStructure, NavItem } from './types';
 
 export const ANIMATION_CONFIG = {
@@ -14,6 +14,18 @@ export const ANIMATION_CONFIG = {
 };
 
 export const DATA_STRUCTURES: DataStructure[] = [
+  {
+    id: 'pathfinding',
+    title: 'Pathfinding',
+    description: 'Visualize how algorithms like Dijkstra, A*, and BFS find the shortest path between nodes in a grid.',
+    icon: Navigation
+  },
+  {
+    id: 'dp',
+    title: 'Dynamic Programming',
+    description: 'Master optimization problems by visualizing the DP table filling process, recurrence relations, and solution backtracking.',
+    icon: Table2
+  },
   {
     id: 'segment-tree',
     title: 'Segment Tree',
