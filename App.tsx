@@ -24,6 +24,7 @@ const MatrixVisualizer = lazy(() => import('./features/matrix-visualizer/MatrixV
 const SegmentTreeVisualizer = lazy(() => import('./features/segment-tree-visualizer/SegmentTreeVisualizer').then(module => ({ default: module.SegmentTreeVisualizer })));
 const DPVisualizer = lazy(() => import('./features/dp-visualizer/DPVisualizer').then(module => ({ default: module.DPVisualizer })));
 const PathfindingVisualizer = lazy(() => import('./features/pathfinding-visualizer/PathfindingVisualizer').then(module => ({ default: module.PathfindingVisualizer })));
+const ConvexHullVisualizer = lazy(() => import('./features/convex-hull-visualizer/ConvexHullVisualizer').then(module => ({ default: module.ConvexHullVisualizer })));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -69,6 +70,8 @@ const App: React.FC = () => {
         return <DPVisualizer onBack={() => setCurrentView('landing')} />;
       case 'pathfinding':
         return <PathfindingVisualizer onBack={() => setCurrentView('landing')} />;
+      case 'convex-hull':
+        return <ConvexHullVisualizer onBack={() => setCurrentView('landing')} />;
       case 'landing':
       default:
         return <LandingPage onNavigate={setCurrentView} />;

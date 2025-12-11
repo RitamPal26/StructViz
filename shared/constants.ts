@@ -1,4 +1,4 @@
-import { Network, Link2, Layers, ListEnd, Share2, Hash, Triangle, Zap, Brain, Globe, Briefcase, Code2, Cpu, BarChart, GitMerge, BarChart3, Scale, Grid3x3, Split, Table2, Navigation } from 'lucide-react';
+import { Network, Link2, Layers, ListEnd, Share2, Hash, Triangle, Zap, Brain, Globe, Briefcase, Code2, Cpu, BarChart, GitMerge, BarChart3, Scale, Grid3x3, Split, Table2, Navigation, Hexagon } from 'lucide-react';
 import { DataStructure, NavItem } from './types';
 
 export const ANIMATION_CONFIG = {
@@ -14,6 +14,12 @@ export const ANIMATION_CONFIG = {
 };
 
 export const DATA_STRUCTURES: DataStructure[] = [
+  {
+    id: 'convex-hull',
+    title: 'Convex Hull',
+    description: 'Visualize geometric algorithms like Graham Scan and Jarvis March to find the smallest polygon enclosing a set of points.',
+    icon: Hexagon
+  },
   {
     id: 'pathfinding',
     title: 'Pathfinding',
