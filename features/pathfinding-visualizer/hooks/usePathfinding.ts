@@ -2,13 +2,27 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { GridCell, AlgorithmType, GridState, MouseMode, CellType } from '../types';
 import { useSound } from '../../../shared/context/SoundContext';
 
-const ROWS = 25;
-const COLS = 50;
+// Helper to determine grid size based on viewport
+const getGridDimensions = () => {
+  if (typeof window === 'undefined') return { rows: 25, cols: 50 };
+  if (window.innerWidth < 640) return { rows: 18, cols: 15 }; // Mobile
+  if (window.innerWidth < 1024) return { rows: 20, cols: 30 }; // Tablet
+  return { rows: 25, cols: 50 }; // Desktop
+};
 
 export const usePathfinding = () => {
+  const [dimensions, setDimensions] = useState(getGridDimensions());
   const [grid, setGrid] = useState<GridCell[][]>([]);
-  const [startNode, setStartNode] = useState({ row: 10, col: 5 });
-  const [finishNode, setFinishNode] = useState({ row: 10, col: 44 });
+  
+  // Calculate relative start/finish positions based on grid size
+  const getInitialNodes = (rows: number, cols: number) => ({
+    start: { row: Math.floor(rows / 2), col: Math.floor(cols * 0.2) },
+    finish: { row: Math.floor(rows / 2), col: Math.floor(cols * 0.8) }
+  });
+
+  const [startNode, setStartNode] = useState(getInitialNodes(dimensions.rows, dimensions.cols).start);
+  const [finishNode, setFinishNode] = useState(getInitialNodes(dimensions.rows, dimensions.cols).finish);
+  
   const [isRunning, setIsRunning] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
   const [stats, setStats] = useState({ visited: 0, length: 0 });
@@ -19,13 +33,40 @@ export const usePathfinding = () => {
   const mouseMode = useRef<MouseMode>('idle');
   const { play } = useSound();
 
+  // Handle Resize
+  useEffect(() => {
+    const handleResize = () => {
+      const newDims = getGridDimensions();
+      // Debounce slightly or just check if changed
+      if (newDims.rows !== dimensions.rows || newDims.cols !== dimensions.cols) {
+        setDimensions(newDims);
+        // Reset start/finish for new dimensions
+        const { start, finish } = getInitialNodes(newDims.rows, newDims.cols);
+        setStartNode(start);
+        setFinishNode(finish);
+      }
+    };
+
+    let timeoutId: number;
+    const debouncedResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(handleResize, 200);
+    };
+
+    window.addEventListener('resize', debouncedResize);
+    return () => {
+      window.removeEventListener('resize', debouncedResize);
+      clearTimeout(timeoutId);
+    };
+  }, [dimensions]);
+
   // Initialize Grid
-  const createNode = (row: number, col: number): GridCell => {
+  const createNode = useCallback((row: number, col: number, sNode: typeof startNode, fNode: typeof finishNode): GridCell => {
     return {
       row,
       col,
-      type: (row === startNode.row && col === startNode.col) ? 'start' :
-            (row === finishNode.row && col === finishNode.col) ? 'finish' : 'empty',
+      type: (row === sNode.row && col === sNode.col) ? 'start' :
+            (row === fNode.row && col === fNode.col) ? 'finish' : 'empty',
       distance: Infinity,
       isVisited: false,
       previousNode: null,
@@ -33,16 +74,17 @@ export const usePathfinding = () => {
       gScore: Infinity,
       hScore: Infinity
     };
-  };
+  }, []);
 
   const resetGrid = useCallback((clearWalls = false) => {
+    setIsRunning(false); // Stop any running algo
     const newGrid: GridCell[][] = [];
-    for (let row = 0; row < ROWS; row++) {
+    for (let row = 0; row < dimensions.rows; row++) {
       const currentRow: GridCell[] = [];
-      for (let col = 0; col < COLS; col++) {
-        const node = createNode(row, col);
-        // Preserve walls if not clearing
-        if (!clearWalls && grid[row] && grid[row][col].type === 'wall') {
+      for (let col = 0; col < dimensions.cols; col++) {
+        const node = createNode(row, col, startNode, finishNode);
+        // Preserve walls if not clearing and bounds check
+        if (!clearWalls && grid[row] && grid[row][col] && grid[row][col].type === 'wall') {
           node.type = 'wall';
         }
         currentRow.push(node);
@@ -52,12 +94,15 @@ export const usePathfinding = () => {
     setGrid(newGrid);
     setIsFinished(false);
     setStats({ visited: 0, length: 0 });
-  }, [startNode, finishNode, grid]);
+  }, [dimensions, startNode, finishNode, grid, createNode]);
 
+  // Re-run resetGrid when dimensions or start/finish nodes change significantly (init)
   useEffect(() => {
-    // Initial load
-    if (grid.length === 0) resetGrid(true);
-  }, [resetGrid, grid.length]);
+    // Only reset if grid size doesn't match dimensions or it's empty
+    if (grid.length !== dimensions.rows || (grid[0] && grid[0].length !== dimensions.cols)) {
+      resetGrid(true);
+    }
+  }, [dimensions, resetGrid, grid]);
 
   // --- MOUSE HANDLERS ---
 
@@ -77,6 +122,9 @@ export const usePathfinding = () => {
 
   const handleMouseEnter = (row: number, col: number) => {
     if (!isMousePressed.current || isRunning) return;
+    
+    // Bounds check
+    if (row < 0 || row >= dimensions.rows || col < 0 || col >= dimensions.cols) return;
 
     if (mouseMode.current === 'moveStart') {
       if (grid[row][col].type !== 'wall' && grid[row][col].type !== 'finish') {
@@ -85,7 +133,6 @@ export const usePathfinding = () => {
         newGrid[row][col].type = 'start'; // New start
         setStartNode({ row, col });
         setGrid(newGrid);
-        // Optional: Re-run algorithm instantly if finished
         if (isFinished) runAlgorithmInstant(row, col, finishNode.row, finishNode.col);
       }
     } else if (mouseMode.current === 'moveFinish') {
@@ -108,6 +155,8 @@ export const usePathfinding = () => {
   };
 
   const toggleWall = (row: number, col: number) => {
+    // Bounds check
+    if (row < 0 || row >= dimensions.rows || col < 0 || col >= dimensions.cols) return;
     if (grid[row][col].type === 'start' || grid[row][col].type === 'finish') return;
     
     const newGrid = [...grid];
@@ -124,18 +173,16 @@ export const usePathfinding = () => {
     const neighbors: GridCell[] = [];
     const { row, col } = node;
     if (row > 0) neighbors.push(grid[row - 1][col]);
-    if (row < ROWS - 1) neighbors.push(grid[row + 1][col]);
+    if (row < dimensions.rows - 1) neighbors.push(grid[row + 1][col]);
     if (col > 0) neighbors.push(grid[row][col - 1]);
-    if (col < COLS - 1) neighbors.push(grid[row][col + 1]);
+    if (col < dimensions.cols - 1) neighbors.push(grid[row][col + 1]);
     return neighbors.filter(neighbor => !neighbor.isVisited && neighbor.type !== 'wall');
   };
 
-  // Helper for heuristics
   const manhattanDistance = (nodeA: GridCell, nodeB: GridCell) => {
     return Math.abs(nodeA.row - nodeB.row) + Math.abs(nodeA.col - nodeB.col);
   };
 
-  // Main Logic Runner
   const runAlgorithm = async () => {
     if (isRunning) return;
     setIsRunning(true);
@@ -162,11 +209,11 @@ export const usePathfinding = () => {
       while (!!unvisitedNodes.length) {
         sortNodesByDistance(unvisitedNodes);
         const closestNode = unvisitedNodes.shift();
-        if (!closestNode || closestNode.distance === Infinity) break; // Trapped
+        if (!closestNode || closestNode.distance === Infinity) break; 
         
         closestNode.isVisited = true;
         visitedNodesInOrder.push(closestNode);
-        if (closestNode === finish) break; // Found
+        if (closestNode === finish) break; 
 
         const neighbors = getNeighbors(closestNode, newGrid);
         for (const neighbor of neighbors) {
@@ -181,7 +228,6 @@ export const usePathfinding = () => {
       const openSet = [start];
 
       while (openSet.length > 0) {
-        // Sort by fScore
         openSet.sort((a, b) => a.fScore - b.fScore);
         const current = openSet.shift()!;
         
@@ -221,9 +267,6 @@ export const usePathfinding = () => {
       }
     } else if (algorithm === 'dfs') {
       const stack = [start];
-      // DFS needs careful visited tracking to avoid loops, handled by isVisited check in getNeighbors mostly
-      // But standard DFS is recursive or explicit stack.
-      
       while (stack.length) {
         const current = stack.pop()!;
         if (current.isVisited) continue;
@@ -250,8 +293,6 @@ export const usePathfinding = () => {
       setTimeout(() => {
         const node = visitedNodesInOrder[i];
         if (node.type !== 'start' && node.type !== 'finish') {
-          // Direct DOM manipulation or State? State is safer but slow for 1000 nodes.
-          // React 18 batching helps.
           updateNodeState(node.row, node.col, 'visited');
         }
       }, speed * i);
@@ -266,7 +307,7 @@ export const usePathfinding = () => {
       currentNode = currentNode.previousNode;
     }
 
-    setStats({ visited: 0, length: nodesInShortestPathOrder.length }); // Will update visited count visually
+    setStats({ visited: 0, length: nodesInShortestPathOrder.length }); 
 
     for (let i = 0; i < nodesInShortestPathOrder.length; i++) {
       setTimeout(() => {
@@ -283,22 +324,21 @@ export const usePathfinding = () => {
     }
   };
 
-  // Optimization: Direct state update for specific cell to avoid full re-render lag if possible
-  // But strictly React way:
   const updateNodeState = (row: number, col: number, type: CellType) => {
     setGrid(prev => {
-      const newGrid = [...prev]; // Shallow copy of rows
-      newGrid[row] = [...newGrid[row]]; // Shallow copy of row
-      newGrid[row][col] = { ...newGrid[row][col], type };
+      const newGrid = [...prev];
+      if (newGrid[row]) {
+        newGrid[row] = [...newGrid[row]];
+        if (newGrid[row][col]) {
+          newGrid[row][col] = { ...newGrid[row][col], type };
+        }
+      }
       return newGrid;
     });
   };
 
-  // Instant run for drag-drop
   const runAlgorithmInstant = (sR: number, sC: number, fR: number, fC: number) => {
-    // Simplified sync version of logic above without timeouts
-    // ... (Omitted for brevity, logic identical to runAlgorithm but synchronous updates)
-    // Ideally extract core logic to pure function.
+    // Simplified sync update logic would go here if needed for drag preview
   };
 
   const getAllNodes = (grid: GridCell[][]) => {
@@ -317,10 +357,9 @@ export const usePathfinding = () => {
 
   const generateMaze = () => {
     resetGrid(true);
-    // Recursive Division or Random
     const newGrid = grid.map(row => row.map(node => ({...node})));
-    for(let r=0; r<ROWS; r++) {
-      for(let c=0; c<COLS; c++) {
+    for(let r=0; r<dimensions.rows; r++) {
+      for(let c=0; c<dimensions.cols; c++) {
         if (Math.random() < 0.3 && !(r === startNode.row && c === startNode.col) && !(r === finishNode.row && c === finishNode.col)) {
           newGrid[r][c].type = 'wall';
         }
@@ -331,6 +370,7 @@ export const usePathfinding = () => {
 
   return {
     grid,
+    dimensions, // Export dims
     isRunning,
     isFinished,
     stats,

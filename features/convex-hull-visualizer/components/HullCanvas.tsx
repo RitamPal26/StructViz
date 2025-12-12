@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Point } from '../types';
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../hooks/useConvexHull';
 
 interface HullCanvasProps {
   points: Point[];
@@ -22,8 +23,11 @@ export const HullCanvas: React.FC<HullCanvasProps> = ({
   const handleClick = (e: React.MouseEvent) => {
     if (svgRef.current) {
       const rect = svgRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      // Map screen coordinates to viewBox coordinates
+      const scaleX = CANVAS_WIDTH / rect.width;
+      const scaleY = CANVAS_HEIGHT / rect.height;
+      const x = (e.clientX - rect.left) * scaleX;
+      const y = (e.clientY - rect.top) * scaleY;
       onCanvasClick(x, y);
     }
   };
@@ -44,10 +48,12 @@ export const HullCanvas: React.FC<HullCanvasProps> = ({
       
       <svg 
         ref={svgRef}
+        viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
         width="100%" 
         height="100%" 
         onClick={handleClick}
         className="block"
+        preserveAspectRatio="xMidYMid meet"
       >
         {/* Candidate Line (Scanning) */}
         <AnimatePresence>
@@ -89,12 +95,11 @@ export const HullCanvas: React.FC<HullCanvasProps> = ({
               <circle
                 cx={p.x}
                 cy={p.y}
-                r={isHullNode ? 6 : 4}
+                r={isHullNode ? 8 : 6}
                 fill={isActive ? '#fbbf24' : isHullNode ? '#22c55e' : '#3b82f6'} // Amber / Green / Blue
                 stroke={isHullNode ? '#14532d' : '#1e3a8a'}
                 strokeWidth="2"
               />
-              {/* Optional: Coords on hover could go here */}
             </motion.g>
           );
         })}
